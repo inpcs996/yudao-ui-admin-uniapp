@@ -23,18 +23,15 @@
             <view class="flex items-center">
               <view
                 v-if="!item.readStatus"
-                class="mr-12rpx h-16rpx w-16rpx rounded-full bg-red-500"
+                class="mr-8rpx h-12rpx w-12rpx flex-shrink-0 rounded-full bg-red-500"
               />
               <view class="text-32rpx text-[#333] font-semibold">
                 {{ item.templateNickname }}
               </view>
             </view>
-            <wd-tag v-if="item.readStatus" type="success" plain>
-              已读
-            </wd-tag>
-            <wd-tag v-else type="warning" plain>
-              未读
-            </wd-tag>
+            <view class="text-26rpx text-[#999]">
+              {{ formatDateTime(item.createTime) }}
+            </view>
           </view>
           <!-- 消息内容 -->
           <view class="mb-12rpx rounded-8rpx bg-[#f7f8f9] p-20rpx">
@@ -45,9 +42,8 @@
               {{ item.templateContent }}
             </view>
           </view>
-          <!-- 消息时间 -->
+          <!-- 底部操作区 -->
           <view class="flex items-center justify-between text-26rpx text-[#999]">
-            <text>{{ formatDateTime(item.createTime) }}</text>
             <view
               v-if="!item.readStatus"
               class="text-[#1890ff]"
