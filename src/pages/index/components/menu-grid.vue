@@ -81,7 +81,6 @@ function getIconStyle(menu: MenuItem) {
 
 <style lang="scss" scoped>
 :deep(.wd-grid-item__text) {
-  margin-top: 8rpx;
   font-size: 24rpx;
   color: #333;
   overflow: visible;

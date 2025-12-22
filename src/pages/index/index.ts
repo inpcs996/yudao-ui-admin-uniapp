@@ -1,4 +1,5 @@
 import { useAccess } from '@/hooks/useAccess'
+import { ONLY_PC_PAGE } from '@/router/config'
 
 /**
  * 工作台菜单数据
@@ -221,28 +222,28 @@ const menuGroupsData: MenuGroup[] = [
         key: 'codegen',
         name: '代码生成',
         icon: 'chevron-up-rectangle',
-        url: '/pages/error/pc-only',
+        url: ONLY_PC_PAGE,
         iconColor: '#1677ff',
       },
       {
         key: 'build',
         name: '表单构建',
         icon: 'edit-outline',
-        url: '/pages/error/pc-only',
+        url: ONLY_PC_PAGE,
         iconColor: '#722ed1',
       },
       {
         key: 'swagger',
         name: 'API 接口',
         icon: 'link',
-        url: '/pages/error/pc-only',
+        url: ONLY_PC_PAGE,
         iconColor: '#52c41a',
       },
       {
         key: 'druid',
         name: '监控中心',
         icon: 'computer',
-        url: '/pages/error/pc-only',
+        url: ONLY_PC_PAGE,
         iconColor: '#fa8c16',
       },
     ],
@@ -282,6 +283,22 @@ const menuGroupsData: MenuGroup[] = [
         url: '/pages/bpm/index?tab=copy',
         iconColor: '#5cdbd3',
         permission: 'bpm:process-instance-cc:query',
+      },
+      {
+        key: 'bpmModel',
+        name: '流程模型',
+        icon: 'app',
+        url: ONLY_PC_PAGE,
+        iconColor: '#1677ff',
+        permission: 'bpm:process-definition:query',
+      },
+      {
+        key: 'bpmForm',
+        name: '流程表单',
+        icon: 'edit-1',
+        url: ONLY_PC_PAGE,
+        iconColor: '#722ed1',
+        permission: 'bpm:form:query',
       },
     ],
   },
