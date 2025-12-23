@@ -109,6 +109,7 @@ definePage({
   style: {
     navigationStyle: 'custom',
   },
+  excludeLoginPath: true,
 })
 
 const toast = useToast()
