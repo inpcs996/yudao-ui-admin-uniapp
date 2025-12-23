@@ -4,6 +4,8 @@
     label="上级菜单"
     label-width="180rpx"
     :columns="menuColumns"
+    value-key="id"
+    label-key="name"
     :column-change="handleColumnChange"
     :display-format="displayFormat"
     @confirm="handleConfirm"
@@ -50,8 +52,8 @@ async function loadMenuList() {
   // 构建第一列数据（主类目 + 顶级菜单）
   const topMenus = menuList.value.filter(item => item.parentId === 0)
   menuColumns.value = [[
-    { value: 0, label: '主类目' },
-    ...topMenus.map(item => ({ value: item.id, label: item.name })),
+    { id: 0, name: '主类目' },
+    ...topMenus,
   ]]
   // 如果有初始值，回显
   if (props.modelValue !== undefined && props.modelValue !== 0) {
@@ -101,22 +103,32 @@ function buildColumnsForPath(path: number[]) {
     }
     const children = menuList.value.filter(item => item.parentId === parentId)
     if (children.length > 0) {
-      columns.push(children.map(item => ({ value: item.id, label: item.name })))
+      columns.push(children)
     }
   }
   menuColumns.value = columns
 }
 
+/** 构建带"选择当前"选项的子列表 */
+function buildChildrenWithCurrent(parentId: number) {
+  const children = menuList.value.filter(item => item.parentId === parentId)
+  // 添加"选择当前"选项，使用父节点 ID 的负数作为标识
+  return [
+    { id: -parentId, name: '✓ 选择当前' },
+    ...children,
+  ]
+}
+
 /** 列变化 */
 function handleColumnChange({ selectedItem, resolve, finish }: any) {
-  if (selectedItem.value === 0) {
-    // 选择主类目，结束
+  // 选择主类目或"选择当前"，结束
+  if (selectedItem.id === 0 || selectedItem.id < 0) {
     finish()
     return
   }
-  const children = menuList.value.filter(item => item.parentId === selectedItem.value)
+  const children = menuList.value.filter(item => item.parentId === selectedItem.id)
   if (children.length > 0) {
-    resolve(children.map(item => ({ value: item.id, label: item.name })))
+    resolve(buildChildrenWithCurrent(selectedItem.id))
   } else {
     finish()
   }
@@ -124,13 +136,23 @@ function handleColumnChange({ selectedItem, resolve, finish }: any) {
 
 /** 格式化显示 */
 function displayFormat(selectedItems: any[]) {
-  return selectedItems.map(item => item.label).join(' / ')
+  // 过滤掉"选择当前"选项
+  return selectedItems
+    .filter(item => item.id >= 0)
+    .map(item => item.name)
+    .join(' / ')
 }
 
 /** 确认选择 */
 function handleConfirm({ value }: { value: number[] }) {
   if (value && value.length > 0) {
-    emit('update:modelValue', value[value.length - 1])
+    const lastValue = value[value.length - 1]
+    // 如果选择的是"选择当前"（负数 ID），取其绝对值作为实际选中的菜单 ID
+    if (lastValue < 0) {
+      emit('update:modelValue', Math.abs(lastValue))
+    } else {
+      emit('update:modelValue', lastValue)
+    }
   } else {
     emit('update:modelValue', 0)
   }

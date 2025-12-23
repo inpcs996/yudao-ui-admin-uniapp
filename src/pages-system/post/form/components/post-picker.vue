@@ -3,7 +3,9 @@
     v-model="selectedIds"
     label="岗位"
     label-width="180rpx"
-    :columns="columns"
+    :columns="postList"
+    value-key="id"
+    label-key="name"
     type="checkbox"
     filterable
     @confirm="handleConfirm"
@@ -12,7 +14,7 @@
 
 <script lang="ts" setup>
 import type { Post } from '@/api/system/post'
-import { computed, onMounted, ref, watch } from 'vue'
+import { onMounted, ref, watch } from 'vue'
 import { getSimplePostList } from '@/api/system/post'
 
 const props = defineProps<{
@@ -25,14 +27,6 @@ const emit = defineEmits<{
 
 const postList = ref<Post[]>([])
 const selectedIds = ref<number[]>([])
-
-/** 构建 columns 数据 */
-const columns = computed(() => {
-  return postList.value.map(item => ({
-    label: item.name,
-    value: item.id,
-  }))
-})
 
 watch(
   () => props.modelValue,

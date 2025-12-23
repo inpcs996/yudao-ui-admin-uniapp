@@ -4,6 +4,8 @@
     :label="label"
     label-width="180rpx"
     :columns="deptColumns"
+    value-key="id"
+    label-key="name"
     :column-change="handleColumnChange"
     :display-format="displayFormat"
     @confirm="handleConfirm"
@@ -64,15 +66,23 @@ function initFirstColumn() {
   if (props.showRoot) {
     deptColumns.value = [
       [
-        { label: '顶级部门', value: 0 },
-        ...topDepts.map(item => ({ value: item.id, label: item.name })),
+        { id: 0, name: '顶级部门' },
+        ...topDepts,
       ],
     ]
   } else {
-    deptColumns.value = [
-      topDepts.map(item => ({ value: item.id, label: item.name })),
-    ]
+    deptColumns.value = [topDepts]
   }
+}
+
+/** 构建带"选择当前"选项的子列表 */
+function buildChildrenWithCurrent(parentId: number) {
+  const children = deptList.value.filter(item => item.parentId === parentId)
+  // 添加"选择当前"选项，使用父节点 ID 的负数作为标识
+  return [
+    { id: -parentId, name: '✓ 选择当前' },
+    ...children,
+  ]
 }
 
 /** 加载部门列表 */
@@ -122,7 +132,7 @@ function buildColumnsForPath(path: number[]) {
     const parentId = path[i]
     const children = deptList.value.filter(item => item.parentId === parentId)
     if (children.length > 0) {
-      columns.push(children.map(item => ({ value: item.id, label: item.name })))
+      columns.push(children)
     }
   }
   deptColumns.value = columns
@@ -130,13 +140,14 @@ function buildColumnsForPath(path: number[]) {
 
 /** 列变化 */
 function handleColumnChange({ selectedItem, resolve, finish }: any) {
-  if (selectedItem.value === 0) {
+  // 选择顶级部门或"选择当前"，结束
+  if (selectedItem.id === 0 || selectedItem.id < 0) {
     finish()
     return
   }
-  const children = deptList.value.filter(item => item.parentId === selectedItem.value)
+  const children = deptList.value.filter(item => item.parentId === selectedItem.id)
   if (children.length > 0) {
-    resolve(children.map(item => ({ value: item.id, label: item.name })))
+    resolve(buildChildrenWithCurrent(selectedItem.id))
   } else {
     finish()
   }
@@ -144,13 +155,23 @@ function handleColumnChange({ selectedItem, resolve, finish }: any) {
 
 /** 格式化显示 */
 function displayFormat(selectedItems: any[]) {
-  return selectedItems.map(item => item.label).join('/')
+  // 过滤掉"选择当前"选项
+  return selectedItems
+    .filter(item => item.id >= 0)
+    .map(item => item.name)
+    .join('/')
 }
 
 /** 确认选择 */
 function handleConfirm({ value }: { value: number[] }) {
   if (value && value.length > 0) {
-    emit('update:modelValue', value[value.length - 1])
+    const lastValue = value[value.length - 1]
+    // 如果选择的是"选择当前"（负数 ID），取其绝对值作为实际选中的部门 ID
+    if (lastValue < 0) {
+      emit('update:modelValue', Math.abs(lastValue))
+    } else {
+      emit('update:modelValue', lastValue)
+    }
   } else {
     // 如果允许 root，默认顶级 0；否则 undefined
     emit('update:modelValue', props.showRoot ? 0 : undefined)
