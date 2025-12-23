@@ -9,48 +9,34 @@
     <view class="yd-search-form-container" :style="{ paddingTop: `${getNavbarHeight()}px` }">
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          操作人
-        </view>
-        <UserPicker
-          ref="userPickerRef"
-          v-model="formData.userId"
-          type="radio"
-          placeholder="请选择操作人员"
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          操作模块
+          组名
         </view>
         <wd-input
-          v-model="formData.type"
-          placeholder="请输入操作模块"
+          v-model="formData.name"
+          placeholder="请输入组名"
           clearable
         />
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          操作名
+          状态
         </view>
-        <wd-input
-          v-model="formData.subType"
-          placeholder="请输入操作名"
-          clearable
-        />
+        <wd-radio-group v-model="formData.status" shape="button">
+          <wd-radio :value="-1">
+            全部
+          </wd-radio>
+          <wd-radio
+            v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
+            :key="dict.value"
+            :value="dict.value"
+          >
+            {{ dict.label }}
+          </wd-radio>
+        </wd-radio-group>
       </view>
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
-          操作内容
-        </view>
-        <wd-input
-          v-model="formData.action"
-          placeholder="请输入操作内容"
-          clearable
-        />
-      </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          操作时间
+          创建时间
         </view>
         <view class="yd-search-form-date-range-container">
           <view class="flex-1" @click="visibleCreateTime[0] = true">
@@ -84,16 +70,6 @@
           </wd-button>
         </view>
       </view>
-      <view class="yd-search-form-item">
-        <view class="yd-search-form-label">
-          业务编号
-        </view>
-        <wd-input
-          v-model="formData.bizId"
-          placeholder="请输入业务编号"
-          clearable
-        />
-      </view>
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" plain @click="handleReset">
           重置
@@ -108,8 +84,9 @@
 
 <script lang="ts" setup>
 import { computed, reactive, ref } from 'vue'
-import UserPicker from '@/components/system-select/user-picker.vue'
+import { getDictLabel, getIntDictOptions } from '@/hooks/useDict'
 import { getNavbarHeight } from '@/utils'
+import { DICT_TYPE } from '@/utils/constants'
 import { formatDate, formatDateRange } from '@/utils/date'
 
 const emit = defineEmits<{
@@ -118,74 +95,58 @@ const emit = defineEmits<{
 }>()
 
 const visible = ref(false)
-const userPickerRef = ref<InstanceType<typeof UserPicker>>()
 const formData = reactive({
-  userId: undefined as number | undefined,
-  type: undefined as string | undefined,
-  subType: undefined as string | undefined,
-  action: undefined as string | undefined,
+  name: undefined as string | undefined,
+  status: -1, // -1 表示全部
   createTime: [undefined, undefined] as [number | undefined, number | undefined],
-  bizId: undefined as number | undefined,
-})
-
-/** 搜索条件 placeholder 拼接 */
-const placeholder = computed(() => {
-  const conditions: string[] = []
-  if (formData.userId !== undefined) {
-    const nickname = userPickerRef.value?.getUserNickname(formData.userId)
-    conditions.push(`操作人:${nickname || formData.userId}`)
-  }
-  if (formData.type) {
-    conditions.push(`操作模块:${formData.type}`)
-  }
-  if (formData.subType) {
-    conditions.push(`操作名:${formData.subType}`)
-  }
-  if (formData.action) {
-    conditions.push(`操作内容:${formData.action}`)
-  }
-  if (formData.createTime?.[0] && formData.createTime?.[1]) {
-    conditions.push(`操作时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
-  }
-  if (formData.bizId !== undefined) {
-    conditions.push(`业务编号:${formData.bizId}`)
-  }
-  return conditions.length > 0 ? conditions.join(' | ') : '搜索操作日志'
 })
 
 // 时间范围选择器状态
 const visibleCreateTime = ref<[boolean, boolean]>([false, false])
 const tempCreateTime = ref<[number, number]>([Date.now(), Date.now()])
 
-/** 操作时间[0]确认 */
+/** 创建时间[0]确认 */
 function handleCreateTime0Confirm() {
   formData.createTime = [tempCreateTime.value[0], formData.createTime?.[1]]
   visibleCreateTime.value[0] = false
 }
 
-/** 操作时间[1]确认 */
+/** 创建时间[1]确认 */
 function handleCreateTime1Confirm() {
   formData.createTime = [formData.createTime?.[0], tempCreateTime.value[1]]
   visibleCreateTime.value[1] = false
 }
+
+/** 搜索条件 placeholder 拼接 */
+const placeholder = computed(() => {
+  const conditions: string[] = []
+  if (formData.name) {
+    conditions.push(`组名:${formData.name}`)
+  }
+  if (formData.status !== -1) {
+    conditions.push(`状态:${getDictLabel(DICT_TYPE.COMMON_STATUS, formData.status)}`)
+  }
+  if (formData.createTime?.[0] && formData.createTime?.[1]) {
+    conditions.push(`创建时间:${formatDate(formData.createTime[0])}~${formatDate(formData.createTime[1])}`)
+  }
+  return conditions.length > 0 ? conditions.join(' | ') : '搜索用户分组'
+})
 
 /** 搜索 */
 function handleSearch() {
   visible.value = false
   emit('search', {
     ...formData,
+    status: formData.status === -1 ? undefined : formData.status,
     createTime: formatDateRange(formData.createTime),
   })
 }
 
 /** 重置 */
 function handleReset() {
-  formData.userId = undefined
-  formData.type = undefined
-  formData.subType = undefined
-  formData.action = undefined
+  formData.name = undefined
+  formData.status = -1
   formData.createTime = [undefined, undefined]
-  formData.bizId = undefined
   visible.value = false
   emit('reset')
 }

@@ -11,51 +11,39 @@
     <view>
       <wd-form ref="formRef" :model="formData" :rules="formRules">
         <wd-cell-group border>
-          <DeptPicker
-            v-model="formData.parentId"
-            label="上级部门"
-            :show-root="true"
-          />
           <wd-input
             v-model="formData.name"
-            label="部门名称"
+            label="组名"
             label-width="180rpx"
             prop="name"
             clearable
-            placeholder="请输入部门名称"
+            placeholder="请输入组名"
           />
-          <wd-cell title="显示顺序" title-width="180rpx" prop="sort" center>
-            <wd-input-number
-              v-model="formData.sort"
-              :min="0"
-            />
-          </wd-cell>
+          <wd-textarea
+            v-model="formData.description"
+            label="描述"
+            label-width="180rpx"
+            prop="description"
+            clearable
+            placeholder="请输入描述"
+          />
           <UserPicker
-            v-model="formData.leaderUserId"
-            type="radio"
-          />
-          <wd-input
-            v-model="formData.phone"
-            label="联系电话"
-            label-width="180rpx"
-            prop="phone"
-            clearable
-            placeholder="请输入联系电话"
-          />
-          <wd-input
-            v-model="formData.email"
-            label="邮箱"
-            label-width="180rpx"
-            prop="email"
-            clearable
-            placeholder="请输入邮箱"
+            ref="userPickerRef"
+            v-model="formData.userIds"
+            label="成员"
+            type="checkbox"
+            placeholder="请选择成员"
           />
           <wd-cell title="状态" title-width="180rpx" prop="status" center>
-            <wd-switch
-              v-model="formData.status"
-              :active-value="CommonStatusEnum.ENABLE"
-              :inactive-value="CommonStatusEnum.DISABLE"
-            />
+            <wd-radio-group v-model="formData.status" shape="button">
+              <wd-radio
+                v-for="dict in getIntDictOptions(DICT_TYPE.COMMON_STATUS)"
+                :key="dict.value"
+                :value="dict.value"
+              >
+                {{ dict.label }}
+              </wd-radio>
+            </wd-radio-group>
           </wd-cell>
         </wd-cell-group>
       </wd-form>
@@ -76,18 +64,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { Dept } from '@/api/system/dept'
+import type { UserGroup } from '@/api/bpm/user-group'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
-import { createDept, getDept, updateDept } from '@/api/system/dept'
-import UserPicker from '@/components/system-select/user-picker.vue'
+import { createUserGroup, getUserGroup, updateUserGroup } from '@/api/bpm/user-group'
+import { UserPicker } from '@/components/system-select'
+import { getIntDictOptions } from '@/hooks/useDict'
 import { navigateBackPlus } from '@/utils'
-import { CommonStatusEnum } from '@/utils/constants'
-import DeptPicker from './components/dept-picker.vue'
+import { CommonStatusEnum, DICT_TYPE } from '@/utils/constants'
 
 const props = defineProps<{
   id?: number | any
-  parentId?: number
 }>()
 
 definePage({
@@ -98,37 +85,35 @@ definePage({
 })
 
 const toast = useToast()
-const getTitle = computed(() => props.id ? '编辑部门' : '新增部门')
+const getTitle = computed(() => props.id ? '编辑用户分组' : '新增用户分组')
 const formLoading = ref(false)
-const formData = ref<Dept>({
+const formData = ref<UserGroup>({
   id: undefined,
   name: '',
-  parentId: props.parentId || 0,
-  sort: 0,
+  description: '',
+  userIds: [],
   status: CommonStatusEnum.ENABLE,
-  leaderUserId: undefined,
-  phone: '',
-  email: '',
+  remark: '',
 })
 const formRules = {
-  parentId: [{ required: true, message: '上级部门不能为空' }],
-  name: [{ required: true, message: '部门名称不能为空' }],
-  sort: [{ required: true, message: '显示顺序不能为空' }],
+  name: [{ required: true, message: '组名不能为空' }],
+  userIds: [{ required: true, message: '成员不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
 }
 const formRef = ref()
+const userPickerRef = ref()
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages-system/dept/index')
+  navigateBackPlus('/pages-bpm/user-group/index')
 }
 
-/** 加载部门详情 */
+/** 加载用户分组详情 */
 async function getDetail() {
   if (!props.id) {
     return
   }
-  formData.value = await getDept(props.id)
+  formData.value = await getUserGroup(props.id)
 }
 
 /** 提交表单 */
@@ -141,10 +126,10 @@ async function handleSubmit() {
   formLoading.value = true
   try {
     if (props.id) {
-      await updateDept(formData.value)
+      await updateUserGroup(formData.value)
       toast.success('修改成功')
     } else {
-      await createDept(formData.value)
+      await createUserGroup(formData.value)
       toast.success('新增成功')
     }
     setTimeout(() => {
@@ -156,9 +141,8 @@ async function handleSubmit() {
 }
 
 /** 初始化 */
-onMounted(async () => {
-  // 获取详情
-  await getDetail()
+onMounted(() => {
+  getDetail()
 })
 </script>
 
