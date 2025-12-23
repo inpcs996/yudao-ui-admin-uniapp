@@ -51,25 +51,14 @@
 </template>
 
 <script lang="ts" setup>
+import type { FileVO } from '@/api/infra/file'
 import { onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
+import { deleteFile, getFile } from '@/api/infra/file'
 import { useAccess } from '@/hooks/useAccess'
-import { http } from '@/http/http'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime } from '@/utils/date'
 import { formatFileSize } from '@/utils/download'
-
-/** 文件信息 */
-interface FileInfo {
-  id?: number
-  configId?: number
-  path: string
-  name?: string
-  url?: string
-  size?: number
-  type?: string
-  createTime?: Date
-}
 
 const props = defineProps<{
   id?: number | any
@@ -84,7 +73,7 @@ definePage({
 
 const { hasAccessByCodes } = useAccess()
 const toast = useToast()
-const formData = ref<FileInfo>()
+const formData = ref<FileVO>()
 const deleting = ref(false)
 
 /** 返回上一页 */
@@ -99,7 +88,7 @@ async function getDetail() {
   }
   try {
     toast.loading('加载中...')
-    formData.value = await http.get<FileInfo>(`/infra/file/get?id=${props.id}`)
+    formData.value = await getFile(props.id)
   } finally {
     toast.close()
   }
@@ -134,7 +123,7 @@ function handleDelete() {
       }
       deleting.value = true
       try {
-        await http.delete(`/infra/file/delete?id=${props.id}`)
+        await deleteFile(props.id)
         toast.success('删除成功')
         setTimeout(() => {
           handleBack()

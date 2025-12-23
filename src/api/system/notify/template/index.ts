@@ -45,7 +45,7 @@ export function updateNotifyTemplate(data: NotifyTemplate) {
 
 /** 删除站内信模板 */
 export function deleteNotifyTemplate(id: number) {
-  return http.delete<boolean>(`/system/notify-template/delete`, { id })
+  return http.delete<boolean>(`/system/notify-template/delete?id=${id}`)
 }
 
 /** 发送站内信 */
