@@ -4,6 +4,7 @@
     <MySearchForm @search="handleSearch" @reset="handleReset" />
 
     <view class="bpm-list">
+      <!-- 我的列表 -->
       <view
         v-for="item in list"
         :key="item.id"
@@ -35,11 +36,10 @@
         </view>
       </view>
 
-      <!-- 空状态 -->
+      <!-- 加载更多 -->
       <view v-if="loadMoreState !== 'loading' && list.length === 0" class="bpm-empty">
         <wd-status-tip image="content" tip="暂无发起的流程" />
       </view>
-      <!-- 加载更多 -->
       <wd-loadmore
         v-if="list.length > 0"
         :state="loadMoreState"

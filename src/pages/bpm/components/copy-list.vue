@@ -4,6 +4,7 @@
     <CopySearchForm @search="handleSearch" @reset="handleReset" />
 
     <view class="bpm-list">
+      <!-- 抄送列表 -->
       <view
         v-for="item in list"
         :key="item.id"
@@ -37,6 +38,7 @@
         </view>
       </view>
 
+      <!-- 加载更多 -->
       <view v-if="loadMoreState !== 'loading' && list.length === 0" class="bpm-empty">
         <wd-status-tip image="content" tip="暂无抄送任务" />
       </view>
