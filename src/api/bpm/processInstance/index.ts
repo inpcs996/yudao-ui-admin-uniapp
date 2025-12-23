@@ -66,3 +66,13 @@ export function createProcessInstance(data: {
 export function cancelProcessInstanceByStartUser(id: string, reason: string) {
   return http.delete<boolean>('/bpm/process-instance/cancel-by-start-user', { id, reason })
 }
+
+/** 查询管理员流程实例分页 */
+export function getProcessInstanceManagerPage(params: PageParam) {
+  return http.get<PageResult<ProcessInstance>>('/bpm/process-instance/manager-page', params)
+}
+
+/** 管理员取消流程实例 */
+export function cancelProcessInstanceByAdmin(id: string, reason: string) {
+  return http.delete<boolean>('/bpm/process-instance/cancel-by-admin', { id, reason })
+}

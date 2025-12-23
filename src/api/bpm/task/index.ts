@@ -18,9 +18,11 @@ export interface Task {
   status: number
   createTime: Date
   endTime?: Date
+  durationInMillis?: number // 持续时间
   reason?: string
   assigneeUser?: TaskUser
   ownerUser?: TaskUser
+  processInstanceId?: string // 流程实例 ID
   processInstance: ProcessInstance
 }
 
@@ -47,4 +49,9 @@ export function rejectTask(data: { id: string, reason: string }) {
 /** 根据流程实例 ID 查询任务列表 */
 export function getTaskListByProcessInstanceId(processInstanceId: string) {
   return http.get<Task[]>(`/bpm/task/list-by-process-instance-id?processInstanceId=${processInstanceId}`)
+}
+
+/** 查询任务管理分页 */
+export function getTaskManagerPage(params: PageParam) {
+  return http.get<PageResult<Task>>('/bpm/task/manager-page', params)
 }
