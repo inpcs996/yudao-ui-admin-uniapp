@@ -3,6 +3,7 @@ import type { CustomRequestOptions, IResponse } from '@/http/types'
 import { nextTick } from 'vue'
 import { useTokenStore } from '@/store/token'
 import { getLastPage, isDoubleTokenMode } from '@/utils'
+import { ApiEncrypt } from '@/utils/encrypt'
 import { toLoginPage } from '@/utils/toLoginPage'
 import { ResultEnum } from './tools/enum'
 
@@ -21,9 +22,21 @@ export function http<T>(options: CustomRequestOptions) {
       // #endif
       // 响应成功
       success: async (res) => {
-        const responseData = res.data as IResponse<T>
-        const { code } = responseData
+        let responseData = res.data as IResponse<T>
+        // 检查是否需要解密响应数据
+        const encryptHeader = ApiEncrypt.getEncryptHeader()
+        const isEncryptResponse = res.header[encryptHeader] === 'true' || res.header[encryptHeader.toLowerCase()] === 'true'
+        if (isEncryptResponse && typeof responseData === 'string') {
+          try {
+            // 解密响应数据
+            responseData = ApiEncrypt.decryptResponse(responseData)
+          } catch (error) {
+            console.error('响应数据解密失败:', error)
+            throw new Error(`响应数据解密失败: ${(error as Error).message}`)
+          }
+        }
 
+        const { code } = responseData
         // 检查是否是401错误（包括HTTP状态码401或业务码401）
         const isTokenExpired = res.statusCode === 401 || code === 401
 

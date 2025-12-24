@@ -2,6 +2,7 @@
 import type { CustomRequestOptions } from '@/http/types'
 import { useTokenStore, useUserStore } from '@/store'
 import { getEnvBaseUrl } from '@/utils'
+import { ApiEncrypt } from '@/utils/encrypt'
 import { stringifyQuery } from './tools/queryString'
 
 // 请求基准地址
@@ -55,11 +56,13 @@ const httpInterceptor = {
     const tokenStore = useTokenStore()
     const token = tokenStore.validToken
     let isToken = (options!.header || {}).isToken === false
-    whiteList.some((v) => {
+
+    for (const v of whiteList) {
       if (options.url && options.url.includes(v)) {
-        return (isToken = false)
+        isToken = false
+        break
       }
-    })
+    }
     if (!isToken && token) {
       options.header.Authorization = `Bearer ${token}`
     }
@@ -71,6 +74,22 @@ const httpInterceptor = {
         options.header['tenant-id'] = tenantId
       }
     }
+
+    // 5. 是否 API 加密
+    if (options.isEncrypt) {
+      try {
+        // 加密请求数据
+        if (options.data) {
+          options.data = ApiEncrypt.encryptRequest(options.data)
+          // 设置加密标识头
+          options.header[ApiEncrypt.getEncryptHeader()] = 'true'
+        }
+      } catch (error) {
+        console.error('请求数据加密失败:', error)
+        throw error
+      }
+    }
+
     return options
   },
 }
