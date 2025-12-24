@@ -3,6 +3,7 @@
  * - key: PC 端路径 (formCustomCreatePath / formCustomViewPath)
  * - value: 移动端路径
  * 原因是：目前暂时没有 mobile 端的自定义表单字段，所以暂时需要硬编码映射关系
+ * 另外：需要在 src/pages-bpm/processInstance/detail/components/form-detail.vue 里，增加使用类似 LeaveDetail 的使用
  */
 const PC_TO_MOBILE_PATH_MAP: Record<string, string> = {
   // OA 请假

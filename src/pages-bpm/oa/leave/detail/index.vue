@@ -1,7 +1,8 @@
 <template>
-  <view class="yd-page-container">
-    <!-- 顶部导航栏 -->
+  <view :class="embedded ? '' : 'yd-page-container'">
+    <!-- 顶部导航栏（仅路由访问时显示） -->
     <wd-navbar
+      v-if="!embedded"
       title="请假详情"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
@@ -9,7 +10,7 @@
 
     <!-- 详情内容 -->
     <view>
-      <wd-cell-group border>
+      <wd-cell-group :border="!embedded">
         <wd-cell title="请假类型">
           <dict-tag :type="DICT_TYPE.BPM_OA_LEAVE_TYPE" :value="formData.type" />
         </wd-cell>
@@ -36,6 +37,7 @@ import { formatDateTime } from '@/utils/date'
 
 const props = defineProps<{
   id?: number | string
+  embedded?: boolean // 是否作为嵌入组件使用（非路由访问）
 }>()
 
 definePage({
@@ -46,7 +48,7 @@ definePage({
 })
 
 const toast = useToast()
-const formData = ref<Leave>({})
+const formData = ref<Partial<Leave>>({})
 
 /** 返回上一页 */
 function handleBack() {

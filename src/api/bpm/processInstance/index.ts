@@ -9,6 +9,21 @@ export interface User {
   deptName?: string
 }
 
+/** 流程定义 */
+export interface ProcessDefinition {
+  id: string
+  key: string
+  name: string
+  description?: string
+  icon?: string
+  category: string
+  formType?: number
+  formId?: number
+  formCustomCreatePath?: string
+  formCustomViewPath?: string
+  suspensionState: number
+}
+
 /** 流程实例 */
 export interface ProcessInstance {
   id: string
@@ -20,10 +35,18 @@ export interface ProcessInstance {
   startTime?: number
   endTime?: number
   startUser?: User
+  businessKey?: string
+  processDefinition?: ProcessDefinition
   summary?: {
     key: string
     value: string
   }[]
+}
+
+/** 审批详情 */
+export interface ApprovalDetail {
+  processInstance: ProcessInstance
+  processDefinition: ProcessDefinition
 }
 
 /** 抄送流程实例 */
@@ -52,6 +75,11 @@ export function getProcessInstanceCopyPage(params: PageParam) {
 /** 查询流程实例详情 */
 export function getProcessInstance(id: string) {
   return http.get<ProcessInstance>(`/bpm/process-instance/get?id=${id}`)
+}
+
+/** 获取审批详情 */
+export function getApprovalDetail(params: { processInstanceId: string, activityId?: string, taskId?: string }) {
+  return http.get<ApprovalDetail>('/bpm/process-instance/get-approval-detail', params)
 }
 
 /** 新增流程实例 */

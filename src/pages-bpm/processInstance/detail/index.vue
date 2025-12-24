@@ -8,7 +8,7 @@
       @click-left="handleBack"
     />
 
-    <!-- 流程信息卡片 -->
+    <!-- 区域：流程信息（基本信息） -->
     <view class="mx-24rpx mt-24rpx overflow-hidden rounded-16rpx bg-white">
       <view class="p-24rpx">
         <!-- 标题和状态 -->
@@ -37,20 +37,10 @@
       </view>
     </view>
 
-    <!-- 摘要信息 -->
-    <view v-if="processInstance.summary?.length" class="mx-24rpx mt-24rpx overflow-hidden rounded-16rpx bg-white">
-      <view class="p-24rpx">
-        <view class="mb-16rpx text-28rpx text-[#333] font-bold">
-          审批信息
-        </view>
-        <view v-for="(item, index) in processInstance.summary" :key="index" class="mb-8rpx flex">
-          <text class="text-26rpx text-[#999]">{{ item.key }}：</text>
-          <text class="text-26rpx text-[#333]">{{ item.value }}</text>
-        </view>
-      </view>
-    </view>
+    <!-- 区域：审批详情（表单） -->
+    <FormDetail :process-definition="processDefinition" :process-instance="processInstance" />
 
-    <!-- 审批记录 -->
+    <!-- 区域：审批记录 TODO @jason：抽成类似 /Users/yunai/Java/yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/processInstance/detail/modules/task-list.vue -->
     <view class="mx-24rpx mt-24rpx overflow-hidden rounded-16rpx bg-white">
       <view class="p-24rpx">
         <view class="mb-16rpx flex items-center justify-between">
@@ -95,7 +85,9 @@
       </view>
     </view>
 
-    <!-- 底部操作栏 -->
+    <!-- TODO 待开发：区域：流程评论 -->
+
+    <!-- 区域：底部操作栏 TODO @jason：抽成类似：/Users/yunai/Java/yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/processInstance/detail/modules/operation-button.vue -->
     <view v-if="runningTask" class="yd-detail-footer">
       <view class="yd-detail-footer-actions">
         <wd-button type="error" plain class="flex-1" @click="handleReject">
@@ -110,17 +102,18 @@
 </template>
 
 <script lang="ts" setup>
-import type { ProcessInstance } from '@/api/bpm/processInstance'
+import type { ProcessDefinition, ProcessInstance } from '@/api/bpm/processInstance'
 import type { Task } from '@/api/bpm/task'
 // TODO @芋艿：缺少功能的补全！！！！
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
-import { getProcessInstance } from '@/api/bpm/processInstance'
+import { getApprovalDetail } from '@/api/bpm/processInstance'
 import { getTaskListByProcessInstanceId } from '@/api/bpm/task'
 import { useUserStore } from '@/store'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime, formatPast } from '@/utils/date'
+import FormDetail from './components/form-detail.vue'
 
 definePage({
   style: {
@@ -133,6 +126,7 @@ const userStore = useUserStore()
 const toast = useToast()
 const processInstanceId = ref('')
 const processInstance = ref<Partial<ProcessInstance>>({})
+const processDefinition = ref<Partial<ProcessDefinition>>({})
 const tasks = ref<Task[]>([])
 const orderAsc = ref(true)
 
@@ -261,7 +255,13 @@ function handleReject() {
 /** 加载流程实例 */
 async function loadProcessInstance() {
   try {
-    processInstance.value = await getProcessInstance(processInstanceId.value)
+    const data = await getApprovalDetail({ processInstanceId: processInstanceId.value })
+    if (!data || !data.processInstance) {
+      toast.show('查询不到审批详情信息')
+      return
+    }
+    processInstance.value = data.processInstance
+    processDefinition.value = data.processDefinition || {}
   } catch (error) {
     console.error('[detail] 加载流程实例失败:', error)
   }
