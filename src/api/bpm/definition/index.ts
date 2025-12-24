@@ -6,6 +6,7 @@ export interface ProcessDefinition {
   key: string
   name: string
   description?: string
+  icon?: string
   category: string
   formType?: number
   formId?: number

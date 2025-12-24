@@ -9,78 +9,75 @@
     />
 
     <!-- 搜索框 -->
-    <view class="bg-white p-24rpx">
-      <wd-search
-        v-model="searchName"
-        placeholder="请输入流程名称"
-        placeholder-left
-        hide-cancel
-        @search="handleSearch"
-        @clear="handleSearch"
-      />
-    </view>
+    <wd-search
+      v-model="searchName"
+      placeholder="请输入流程名称"
+      placeholder-left
+      hide-cancel
+      @search="handleSearch"
+      @clear="handleSearch"
+    />
 
     <!-- 分类标签 -->
-    <!-- TODO @AI：可以使用 https://wot-ui.cn/component/index-bar.html 组件么？ -->
-    <view class="flex overflow-x-auto bg-white px-16rpx">
-      <view
-        v-for="(item, index) in categoryList"
-        :key="item.id"
-        class="relative whitespace-nowrap px-24rpx py-20rpx text-28rpx"
-        :class="activeIndex === index ? 'font-bold text-[#1890ff]' : 'text-[#666]'"
-        @click="switchCategory(index)"
-      >
-        {{ item.name }}
-        <view
-          v-if="activeIndex === index"
-          class="absolute bottom-0 left-24rpx right-24rpx h-4rpx bg-[#1890ff]"
-        />
-      </view>
-    </view>
+    <wd-tabs
+      v-model="activeCategory"
+      slidable="always"
+      sticky
+      @click="handleTabClick"
+    >
+      <wd-tab v-for="item in categoryList" :key="item.code" :title="item.name" :name="item.code" />
+    </wd-tabs>
 
     <!-- 流程定义列表 -->
     <scroll-view
       scroll-y
-      class="h-[calc(100vh-280rpx)]"
+      class="h-[calc(100vh-320rpx)]"
       :scroll-into-view="scrollIntoView"
       scroll-with-animation
+      @scroll="handleScroll"
     >
       <view
-        v-for="(definitions, category) in groupedDefinitions"
-        :id="`category-${category}`"
-        :key="category"
-        class="mx-24rpx mt-24rpx"
+        v-for="item in categoryList"
+        :id="`category-${item.code}`"
+        :key="item.code"
+        class="category-section mx-24rpx mt-24rpx"
+        :data-category="item.code"
       >
         <!-- 分类标题 -->
-        <view class="mb-16rpx flex items-center justify-between">
-          <text class="text-28rpx text-[#333] font-bold">{{ getCategoryName(category as string) }}</text>
-          <wd-icon
-            :name="expandedCategories[category as string] ? 'arrow-up' : 'arrow-down'"
-            size="32rpx"
-            @click="toggleCategory(category as string)"
-          />
+        <view class="mb-16rpx flex items-center">
+          <text class="text-28rpx text-[#333] font-bold">{{ item.name }}</text>
         </view>
         <!-- 流程列表 -->
-        <view v-if="expandedCategories[category as string]" class="overflow-hidden rounded-16rpx bg-white">
+        <view v-if="groupedDefinitions[item.code]?.length" class="overflow-hidden rounded-16rpx bg-white">
           <view
-            v-for="(item, index) in definitions"
-            :key="item.id"
+            v-for="definition in groupedDefinitions[item.code]"
+            :key="definition.id"
             class="flex items-center border-b border-[#f5f5f5] p-24rpx last:border-b-0"
-            @click="handleSelect(item)"
+            @click="handleSelect(definition)"
           >
+            <image
+              v-if="definition.icon"
+              :src="definition.icon"
+              class="mr-16rpx h-64rpx w-64rpx rounded-12rpx object-contain"
+              mode="aspectFit"
+            />
             <view
+              v-else
               class="mr-16rpx h-64rpx w-64rpx flex items-center justify-center rounded-12rpx"
-              :style="{ backgroundColor: getIconColor(index) }"
+              :style="{ backgroundColor: getIconColor(definition.name) }"
             >
-              <wd-icon :name="getIconName(index)" size="40rpx" color="#fff" />
+              <text class="text-24rpx text-white font-bold">{{ getIconText(definition.name) }}</text>
             </view>
-            <text class="text-28rpx text-[#333]">{{ item.name }}</text>
+            <text class="text-28rpx text-[#333]">{{ definition.name }}</text>
           </view>
+        </view>
+        <view v-else class="overflow-hidden rounded-16rpx bg-white p-24rpx text-center">
+          <text class="text-26rpx text-[#999]">该分类下暂无流程</text>
         </view>
       </view>
 
       <!-- 空状态 -->
-      <view v-if="Object.keys(groupedDefinitions).length === 0" class="py-100rpx">
+      <view v-if="categoryList.length === 0" class="py-100rpx">
         <wd-status-tip image="content" tip="暂无可发起的流程" />
       </view>
     </scroll-view>
@@ -91,7 +88,7 @@
 import type { Category } from '@/api/bpm/category'
 import type { ProcessDefinition } from '@/api/bpm/definition'
 import { onLoad } from '@dcloudio/uni-app'
-import { computed, ref } from 'vue'
+import { computed, nextTick, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { getCategorySimpleList } from '@/api/bpm/category'
 import { getProcessDefinitionList } from '@/api/bpm/definition'
@@ -121,23 +118,29 @@ definePage({
 const toast = useToast()
 
 const searchName = ref('')
-const activeIndex = ref(0)
-const scrollIntoView = ref('')
+const activeCategory = ref('')
 const categoryList = ref<Category[]>([])
-const definitionList = ref<ProcessDefinition[]>([])
-const expandedCategories = ref<Record<string, boolean>>({})
+const categoryPositions = ref<{ code: string, top: number }[]>([]) // 分类区域位置信息（用于滚动时自动切换 tab）
+const scrollIntoView = ref('')
+const isTabClicking = ref(false) // 是否正在通过点击 tab 触发滚动（避免滚动事件反向更新 tab）
 
-/** 图标配置 */
-// TODO @芋艿：【流程定义图标】支持显示流程定义的自定义图标 definition.icon
-// 对应 vben 第 175-189 行：优先显示 definition.icon，无图标时显示流程名称前两个字
-// TODO @AI：优化下，图标使用 vben 对应的逻辑；
-const iconConfig = [
-  { icon: 'warning', color: '#D98469' },
-  { icon: 'heart', color: '#7BC67C' },
-  { icon: 'cart', color: '#4A7FEB' },
-  { icon: 'home', color: '#4A7FEB' },
-  { icon: 'location', color: '#4A9DEB' },
-]
+const definitionList = ref<ProcessDefinition[]>([])
+
+/** 根据流程名称获取图标背景色 */
+function getIconColor(name: string): string {
+  const iconColors = ['#D98469', '#7BC67C', '#4A7FEB', '#9B7FEB', '#4A9DEB']
+  // 根据名称 hashcode 取模选择颜色
+  let hash = 0
+  for (let i = 0; i < name.length; i++) {
+    hash = (hash * 31 + name.charCodeAt(i)) | 0
+  }
+  return iconColors[Math.abs(hash) % iconColors.length]
+}
+
+/** 获取流程名称的前两个字符作为图标文字 */
+function getIconText(name: string): string {
+  return name?.slice(0, 2) || ''
+}
 
 /** 过滤后的流程定义 */
 const filteredDefinitions = computed(() => {
@@ -159,13 +162,7 @@ const groupedDefinitions = computed<Record<string, ProcessDefinition[]>>(() => {
       grouped[item.category] = []
     grouped[item.category].push(item)
   })
-  // 按 categoryList 顺序排序
-  const ordered: Record<string, ProcessDefinition[]> = {}
-  categoryList.value.forEach((cat) => {
-    if (grouped[cat.code])
-      ordered[cat.code] = grouped[cat.code]
-  })
-  return ordered
+  return grouped
 })
 
 /** 返回上一页 */
@@ -174,46 +171,63 @@ function handleBack() {
 }
 
 /** 搜索 */
-function handleSearch() {
-  // 搜索时展开所有分类
-  categoryList.value.forEach((cat) => {
-    expandedCategories.value[cat.code] = true
+async function handleSearch() {
+  // 搜索后重新计算分类位置
+  await nextTick()
+  updateCategoryPositions()
+}
+
+/** Tab 点击 */
+function handleTabClick({ name }: { index: number, name: string }) {
+  isTabClicking.value = true
+  // 滚动到对应分类
+  scrollIntoView.value = ''
+  nextTick(() => {
+    scrollIntoView.value = `category-${name}`
+    // 300ms 后恢复滚动监听
+    setTimeout(() => {
+      isTabClicking.value = false
+    }, 300)
   })
 }
 
-/** 切换分类 */
-// TODO @AI：目前有个 bug；滚动到为止后，选中的 category 不会变；
-function switchCategory(index: number) {
-  activeIndex.value = index
-  const category = categoryList.value[index]
-  if (category) {
-    expandedCategories.value[category.code] = true
-    // 滚动到对应分类
-    scrollIntoView.value = ''
-    setTimeout(() => {
-      scrollIntoView.value = `category-${category.code}`
-    }, 50)
+/** 滚动事件 - 自动切换 tab */
+function handleScroll(e: { detail: { scrollTop: number } }) {
+  if (isTabClicking.value || categoryPositions.value.length === 0) {
+    return
+  }
+  // 找到当前滚动位置对应的分类
+  const scrollTop = e.detail.scrollTop
+  for (let i = categoryPositions.value.length - 1; i >= 0; i--) {
+    if (scrollTop >= categoryPositions.value[i].top - 20) {
+      if (activeCategory.value !== categoryPositions.value[i].code) {
+        activeCategory.value = categoryPositions.value[i].code
+      }
+      break
+    }
   }
 }
 
-/** 切换分类展开/收起 */
-function toggleCategory(code: string) {
-  expandedCategories.value[code] = !expandedCategories.value[code]
-}
-
-/** 获取分类名称 */
-function getCategoryName(code: string) {
-  return categoryList.value.find(item => item.code === code)?.name || code
-}
-
-/** 获取图标名称 */
-function getIconName(index: number) {
-  return iconConfig[index % iconConfig.length].icon
-}
-
-/** 获取图标颜色 */
-function getIconColor(index: number) {
-  return iconConfig[index % iconConfig.length].color
+/** 更新分类区域位置信息 */
+function updateCategoryPositions() {
+  const query = uni.createSelectorQuery()
+  query.selectAll('.category-section').boundingClientRect()
+  query.exec((res) => {
+    if (res && res[0]) {
+      const positions: { code: string, top: number }[] = []
+      const firstTop = res[0][0]?.top || 0
+      res[0].forEach((item: { top: number, dataset?: { category?: string } }, index: number) => {
+        const cat = categoryList.value[index]
+        if (cat) {
+          positions.push({
+            code: cat.code,
+            top: item.top - firstTop,
+          })
+        }
+      })
+      categoryPositions.value = positions
+    }
+  })
 }
 
 /** 选择流程定义 */
@@ -231,10 +245,6 @@ function handleSelect(item: ProcessDefinition) {
 /** 加载分类列表 */
 async function loadCategoryList() {
   categoryList.value = await getCategorySimpleList()
-  // 默认展开所有分类
-  categoryList.value.forEach((cat) => {
-    expandedCategories.value[cat.code] = true
-  })
 }
 
 /** 加载流程定义列表 */
@@ -245,5 +255,17 @@ async function loadDefinitionList() {
 /** 初始化 */
 onLoad(async () => {
   await Promise.all([loadCategoryList(), loadDefinitionList()])
+  // 默认选中第一个分类
+  if (categoryList.value.length > 0) {
+    activeCategory.value = categoryList.value[0].code
+  }
+  // 等待 DOM 渲染后计算分类位置
+  await nextTick()
+  setTimeout(() => {
+    updateCategoryPositions()
+  }, 100)
 })
 </script>
+
+<style lang="scss" scoped>
+</style>
