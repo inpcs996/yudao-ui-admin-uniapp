@@ -1,4 +1,5 @@
 <template>
+  <!-- TODO vben 对应的地址：/Users/yunai/Java/yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/processInstance/create/index.vue -->
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
     <wd-navbar
@@ -20,6 +21,7 @@
     </view>
 
     <!-- 分类标签 -->
+    <!-- TODO @AI：可以使用 https://wot-ui.cn/component/index-bar.html 组件么？ -->
     <view class="flex overflow-x-auto bg-white px-16rpx">
       <view
         v-for="(item, index) in categoryList"
@@ -95,6 +97,20 @@ import { getCategorySimpleList } from '@/api/bpm/category'
 import { getProcessDefinitionList } from '@/api/bpm/definition'
 import { navigateBackPlus } from '@/utils'
 
+// TODO @芋艿：【重新发起流程】支持通过 processInstanceId 参数重新发起已有流程
+// 对应 vben 第 44-60 行：从路由获取 processInstanceId，查询流程实例后自动选中对应流程定义并填充表单数据
+
+// TODO @芋艿：【流程表单填写】选择流程后跳转到表单填写页面
+// 对应 vben form.vue 全部：包含以下子功能：
+// - 表单渲染 (form-create)：vben form.vue 第 145-152 行
+// - 审批流程预览时间线：vben form.vue 第 153-162 行
+// - 流程图预览 (BPMN/简易)：vben form.vue 第 163-178 行
+// - 发起人自选审批人：vben form.vue 第 30-32, 85-95 行
+// - 表单字段权限控制 (读/写/隐藏)：vben form.vue 第 119-131 行
+// - 业务表单跳转 (formCustomCreatePath)：vben form.vue 第 79-85 行
+// - 表单值变化重新预测审批节点：vben form.vue 第 87-102 行
+// - 提交流程实例：vben form.vue 第 56-76 行
+
 definePage({
   style: {
     navigationBarTitleText: '',
@@ -112,7 +128,9 @@ const definitionList = ref<ProcessDefinition[]>([])
 const expandedCategories = ref<Record<string, boolean>>({})
 
 /** 图标配置 */
-// TODO @芋艿：这个研发，是否需要弄？！
+// TODO @芋艿：【流程定义图标】支持显示流程定义的自定义图标 definition.icon
+// 对应 vben 第 175-189 行：优先显示 definition.icon，无图标时显示流程名称前两个字
+// TODO @AI：优化下，图标使用 vben 对应的逻辑；
 const iconConfig = [
   { icon: 'warning', color: '#D98469' },
   { icon: 'heart', color: '#7BC67C' },
@@ -164,6 +182,7 @@ function handleSearch() {
 }
 
 /** 切换分类 */
+// TODO @AI：目前有个 bug；滚动到为止后，选中的 category 不会变；
 function switchCategory(index: number) {
   activeIndex.value = index
   const category = categoryList.value[index]
@@ -199,30 +218,28 @@ function getIconColor(index: number) {
 
 /** 选择流程定义 */
 function handleSelect(item: ProcessDefinition) {
+  // TODO @芋艿：【流程描述提示】显示流程描述 Tooltip
+  // 对应 vben 第 190-195 行：鼠标悬停显示 definition.description
+
+  // TODO @芋艿：【搜索高亮动画】搜索匹配时卡片有弹跳动画效果
+  // 对应 vben 第 169-173 行：搜索时添加 animate-bounce-once 动画类
+
   // TODO @芋艿：跳转到流程表单页面
   toast.show(`选择了: ${item.name}`)
 }
 
 /** 加载分类列表 */
 async function loadCategoryList() {
-  try {
-    categoryList.value = await getCategorySimpleList()
-    // 默认展开所有分类
-    categoryList.value.forEach((cat) => {
-      expandedCategories.value[cat.code] = true
-    })
-  } catch (error) {
-    console.error('[create] 加载分类失败:', error)
-  }
+  categoryList.value = await getCategorySimpleList()
+  // 默认展开所有分类
+  categoryList.value.forEach((cat) => {
+    expandedCategories.value[cat.code] = true
+  })
 }
 
 /** 加载流程定义列表 */
 async function loadDefinitionList() {
-  try {
-    definitionList.value = await getProcessDefinitionList({ suspensionState: 1 })
-  } catch (error) {
-    console.error('[create] 加载流程定义失败:', error)
-  }
+  definitionList.value = await getProcessDefinitionList({ suspensionState: 1 })
 }
 
 /** 初始化 */
