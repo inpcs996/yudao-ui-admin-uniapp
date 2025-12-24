@@ -8,20 +8,15 @@ export interface Leave {
   type: number
   reason: string
   processInstanceId: string
-  startTime: number
-  endTime: number
-  createTime: number
+  startTime: Date | any
+  endTime: Date | any
+  createTime: Date
   startUserSelectAssignees?: Record<string, string[]>
 }
 
 /** 创建请假申请 */
 export function createLeave(data: Partial<Leave>) {
   return http.post<number>('/bpm/oa/leave/create', data)
-}
-
-/** 更新请假申请 */
-export function updateLeave(data: Partial<Leave>) {
-  return http.put<boolean>('/bpm/oa/leave/update', data)
 }
 
 /** 获得请假申请 */

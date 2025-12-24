@@ -7,7 +7,6 @@
   <!-- 搜索弹窗 -->
   <wd-popup v-model="visible" position="top" @close="visible = false">
     <view class="yd-search-form-container" :style="{ paddingTop: `${getNavbarHeight()}px` }">
-      <!-- 请假类型 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           请假类型
@@ -21,7 +20,6 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <!-- 审批结果 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           审批结果
@@ -35,7 +33,6 @@
           </wd-radio>
         </wd-radio-group>
       </view>
-      <!-- 创建时间 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           创建时间
@@ -72,7 +69,6 @@
           </wd-button>
         </view>
       </view>
-      <!-- 请假原因 -->
       <view class="yd-search-form-item">
         <view class="yd-search-form-label">
           请假原因
@@ -83,7 +79,6 @@
           clearable
         />
       </view>
-      <!-- 操作按钮 -->
       <view class="yd-search-form-actions">
         <wd-button class="flex-1" plain @click="handleReset">
           重置

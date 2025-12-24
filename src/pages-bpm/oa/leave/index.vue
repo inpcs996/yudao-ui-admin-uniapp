@@ -49,14 +49,13 @@
             <text class="bpm-time">{{ formatDateTime(item.createTime) }}</text>
           </view>
         </view>
-        <!-- 操作按钮 -->
         <view class="bpm-actions">
           <view class="bpm-action-btn" @click.stop="handleDetail(item)">
-            <wd-icon name="eye-on" size="32rpx" />
+            <wd-icon name="view" size="32rpx" />
             <text class="ml-8rpx">详情</text>
           </view>
           <view class="bpm-action-btn" @click.stop="handleProgress(item)">
-            <wd-icon name="flow" size="32rpx" />
+            <wd-icon name="queue" size="32rpx" />
             <text class="ml-8rpx">审批进度</text>
           </view>
           <view
@@ -81,12 +80,12 @@
       />
 
       <!-- 新增按钮 -->
-      <view
-        class="fixed bottom-100rpx right-32rpx z-10 h-100rpx w-100rpx flex items-center justify-center rounded-full bg-[#1890ff] shadow-lg"
+      <wd-fab
+        position="right-bottom"
+        type="primary"
+        :expandable="false"
         @click="handleCreate"
-      >
-        <wd-icon name="add" size="24px" color="#fff" />
-      </view>
+      />
     </view>
   </view>
 </template>
@@ -96,23 +95,14 @@ import type { Leave } from '@/api/bpm/oa/leave'
 import type { LoadMoreState } from '@/http/types'
 import { onReachBottom } from '@dcloudio/uni-app'
 import { computed, onMounted, ref } from 'vue'
-import { useMessage } from 'wot-design-uni'
 import { getLeavePage } from '@/api/bpm/oa/leave'
 import { cancelProcessInstanceByStartUser } from '@/api/bpm/processInstance'
 import { useUserStore } from '@/store'
 import { navigateBackPlus } from '@/utils'
-import { DICT_TYPE } from '@/utils/constants'
+import { BpmProcessInstanceStatus, DICT_TYPE } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import LeaveSearchForm from './components/search-form.vue'
 import '@/pages/bpm/styles/index.scss'
-
-/** 流程实例状态枚举 */
-const BpmProcessInstanceStatus = {
-  RUNNING: 1, // 审批中
-  APPROVE: 2, // 审批通过
-  REJECT: 3, // 审批不通过
-  CANCEL: 4, // 已取消
-}
 
 definePage({
   style: {
@@ -122,7 +112,6 @@ definePage({
 })
 
 const userStore = useUserStore()
-const message = useMessage()
 const userNickname = computed(() => userStore.userInfo?.nickname || '')
 
 const total = ref(0)
@@ -136,7 +125,7 @@ const queryParams = ref({
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus('/pages/bpm/index')
+  navigateBackPlus()
 }
 
 /** 查询列表 */
@@ -190,22 +179,25 @@ function handleProgress(item: Leave) {
 
 /** 取消请假 */
 function handleCancel(item: Leave) {
-  message.confirm({
+  uni.showModal({
     title: '取消流程',
-    msg: '确定要取消该请假申请吗？',
-  }).then(async ({ action }) => {
-    if (action !== 'confirm') {
-      return
-    }
-    // TODO：原始 vben 版本支持输入取消原因，uniapp 的 message.confirm 不支持输入框
-    // 参考：yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/oa/leave/index.vue 第 35-60 行
-    try {
-      await cancelProcessInstanceByStartUser(String(item.id), '用户取消')
+    editable: true,
+    placeholderText: '请输入取消原因',
+    success: async (res) => {
+      if (!res.confirm) {
+        return
+      }
+      const reason = res.content?.trim()
+      if (!reason) {
+        uni.showToast({ title: '请输入取消原因', icon: 'none' })
+        return
+      }
+      await cancelProcessInstanceByStartUser(String(item.processInstanceId), reason)
+      // 更新状态
       uni.showToast({ title: '取消成功', icon: 'success' })
-      handleSearch()
-    } catch (error) {
-      console.error('[leave] 取消失败:', error)
-    }
+      item.status = BpmProcessInstanceStatus.CANCEL
+      item.endTime = new Date()
+    },
   })
 }
 
