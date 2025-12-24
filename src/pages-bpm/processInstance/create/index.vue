@@ -55,11 +55,14 @@
             class="flex items-center border-b border-[#f5f5f5] p-24rpx last:border-b-0"
             @click="handleSelect(definition)"
           >
-            <image
+            <wd-img
               v-if="definition.icon"
               :src="definition.icon"
-              class="mr-16rpx h-64rpx w-64rpx rounded-12rpx object-contain"
+              width="64rpx"
+              height="64rpx"
               mode="aspectFit"
+              radius="24rpx"
+              class="mr-16rpx"
             />
             <view
               v-else
@@ -92,7 +95,9 @@ import { computed, nextTick, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { getCategorySimpleList } from '@/api/bpm/category'
 import { getProcessDefinitionList } from '@/api/bpm/definition'
+import { getMobileFormCustomPath } from '@/pages-bpm/utils'
 import { navigateBackPlus } from '@/utils'
+import { BpmModelFormType } from '@/utils/constants'
 
 // TODO @芋艿：【重新发起流程】支持通过 processInstanceId 参数重新发起已有流程
 // 对应 vben 第 44-60 行：从路由获取 processInstanceId，查询流程实例后自动选中对应流程定义并填充表单数据
@@ -232,14 +237,22 @@ function updateCategoryPositions() {
 
 /** 选择流程定义 */
 function handleSelect(item: ProcessDefinition) {
-  // TODO @芋艿：【流程描述提示】显示流程描述 Tooltip
-  // 对应 vben 第 190-195 行：鼠标悬停显示 definition.description
+  // 情况一：流程表单，提示仅允许 PC 端发起
+  if (item.formType === BpmModelFormType.NORMAL) {
+    // TODO @jason：业务表单：/Users/yunai/Java/yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/processInstance/create/modules/form.vue
+    toast.show('流程表单仅支持 PC 端发起')
+    return
+  }
 
-  // TODO @芋艿：【搜索高亮动画】搜索匹配时卡片有弹跳动画效果
-  // 对应 vben 第 169-173 行：搜索时添加 animate-bounce-once 动画类
-
-  // TODO @芋艿：跳转到流程表单页面
-  toast.show(`选择了: ${item.name}`)
+  // 情况二：业务表单，跳转到对应的移动端页面
+  if (item.formType === BpmModelFormType.CUSTOM) {
+    const mobilePath = getMobileFormCustomPath(item.formCustomCreatePath)
+    if (mobilePath) {
+      uni.navigateTo({ url: mobilePath })
+    } else {
+      toast.show('该业务表单暂不支持移动端发起')
+    }
+  }
 }
 
 /** 加载分类列表 */
