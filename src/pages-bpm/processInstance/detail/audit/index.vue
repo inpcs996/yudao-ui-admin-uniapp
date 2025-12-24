@@ -92,6 +92,7 @@ function validateForm() {
 
 /** 提交审批 */
 async function handleSubmit() {
+  // TODO @jason：看看是不是要用原生的校验
   if (submitting.value)
     return
   if (!validateForm())

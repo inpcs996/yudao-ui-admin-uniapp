@@ -1,5 +1,4 @@
 <template>
-  <!-- TODO @芋艿：功能待 review；先从老版本迁移过来！ -->
   <view class="yd-page-container">
     <!-- 顶部导航栏 -->
     <wd-navbar
@@ -38,6 +37,7 @@
     </view>
 
     <!-- 区域：审批详情（表单） -->
+    <!-- TODO @jason：看看 idea 告警，怎么优化下 -->
     <FormDetail :process-definition="processDefinition" :process-instance="processInstance" />
 
     <!-- 区域：审批记录 TODO @jason：抽成类似 /Users/yunai/Java/yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/processInstance/detail/modules/task-list.vue -->
@@ -45,6 +45,7 @@
       <view class="p-24rpx">
         <view class="mb-16rpx flex items-center justify-between">
           <text class="text-28rpx text-[#333] font-bold">审批记录</text>
+          <!-- TODO @AI：去掉 orderAsc，不要 toggleOrder -->
           <wd-icon :name="orderAsc ? 'arrow-up' : 'arrow-down'" size="32rpx" @click="toggleOrder" />
         </view>
         <!-- 任务列表 -->
@@ -97,6 +98,10 @@
           同意
         </wd-button>
       </view>
+      <!-- TODO @jason：审批通过、不通过：缺少签名、选择审批人 -->
+      <!-- TODO @jason：取消流程、重新发起 -->
+      <!-- TODO @jason：抄送、转派、委派、退回 -->
+      <!-- TODO @jason：加签、减签 -->
     </view>
   </view>
 </template>
@@ -104,7 +109,6 @@
 <script lang="ts" setup>
 import type { ProcessDefinition, ProcessInstance } from '@/api/bpm/processInstance'
 import type { Task } from '@/api/bpm/task'
-// TODO @芋艿：缺少功能的补全！！！！
 import { onLoad } from '@dcloudio/uni-app'
 import { computed, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -171,6 +175,8 @@ function toggleOrder() {
 }
 
 /** 获取状态文本 */
+// TODO @jason：要有标签，和 vben 一样，盖章
+// TODO @jason：通过字典
 function getStatusText(status?: number) {
   const map: Record<number, string> = {
     0: '待审批',
@@ -203,6 +209,7 @@ function getStatusType(status?: number): 'default' | 'primary' | 'success' | 'wa
 }
 
 /** 获取任务圆点样式 */
+// TODO @jason：看看又要对齐 vben
 function getTaskDotClass(task: Task) {
   if ([1, 6, 7].includes(task.status)) {
     return 'bg-[#1890ff]'
@@ -220,6 +227,7 @@ function getTaskDotClass(task: Task) {
 }
 
 /** 获取状态文本样式 */
+// TODO @jason：看看又要对齐 vben
 function getStatusTextClass(status: number) {
   if ([1, 6, 7].includes(status)) {
     return 'text-[#1890ff]'
@@ -254,30 +262,23 @@ function handleReject() {
 
 /** 加载流程实例 */
 async function loadProcessInstance() {
-  try {
-    const data = await getApprovalDetail({ processInstanceId: processInstanceId.value })
-    if (!data || !data.processInstance) {
-      toast.show('查询不到审批详情信息')
-      return
-    }
-    processInstance.value = data.processInstance
-    processDefinition.value = data.processDefinition || {}
-  } catch (error) {
-    console.error('[detail] 加载流程实例失败:', error)
+  const data = await getApprovalDetail({ processInstanceId: processInstanceId.value })
+  if (!data || !data.processInstance) {
+    toast.show('查询不到审批详情信息')
+    return
   }
+  processInstance.value = data.processInstance
+  processDefinition.value = data.processDefinition || {}
 }
 
 /** 加载任务列表 */
 async function loadTasks() {
-  try {
-    tasks.value = await getTaskListByProcessInstanceId(processInstanceId.value)
-  } catch (error) {
-    console.error('[detail] 加载任务列表失败:', error)
-  }
+  tasks.value = await getTaskListByProcessInstanceId(processInstanceId.value)
 }
 
 /** 初始化 */
 onLoad(async (options) => {
+  // TODO @jason：通过 props id 处理；
   if (!options?.id) {
     toast.show('参数错误')
     return
