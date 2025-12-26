@@ -61,7 +61,7 @@ import { isMobile } from '@/utils/validator'
 import CodeInput from './components/code-input.vue'
 import Header from './components/header.vue'
 import TenantPicker from './components/tenant-picker.vue'
-import { Verify } from './components/verifition'
+import Verify from './components/verifition/verify.vue'
 
 defineOptions({
   name: 'SmsLoginPage',
