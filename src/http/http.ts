@@ -23,7 +23,7 @@ export function http<T>(options: CustomRequestOptions) {
       // 响应成功
       success: async (res) => {
         let responseData = res.data as IResponse<T>
-        // 检查是否需要解密响应数据
+        // add by panda：检查是否需要解密响应数据
         const encryptHeader = ApiEncrypt.getEncryptHeader()
         const isEncryptResponse = res.header[encryptHeader] === 'true' || res.header[encryptHeader.toLowerCase()] === 'true'
         if (isEncryptResponse && typeof responseData === 'string') {
