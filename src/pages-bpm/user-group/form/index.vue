@@ -64,6 +64,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { UserGroup } from '@/api/bpm/user-group'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -100,7 +101,7 @@ const formRules = {
   userIds: [{ required: true, message: '成员不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 const userPickerRef = ref()
 
 /** 返回上一页 */

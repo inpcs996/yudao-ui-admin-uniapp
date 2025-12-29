@@ -63,6 +63,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { DataSourceConfig } from '@/api/infra/data-source-config'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -96,7 +97,7 @@ const formRules = {
   username: [{ required: true, message: '用户名不能为空' }],
   password: [{ required: true, message: '密码不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

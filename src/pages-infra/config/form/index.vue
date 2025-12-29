@@ -80,6 +80,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { Config } from '@/api/infra/config'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -117,7 +118,7 @@ const formRules = {
   value: [{ required: true, message: '参数键值不能为空' }],
   visible: [{ required: true, message: '是否可见不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

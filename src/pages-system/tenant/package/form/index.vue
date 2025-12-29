@@ -57,6 +57,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { TenantPackage } from '@/api/system/tenant/package'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -90,7 +91,7 @@ const formRules = {
   name: [{ required: true, message: '套餐名称不能为空' }],
   status: [{ required: true, message: '状态不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

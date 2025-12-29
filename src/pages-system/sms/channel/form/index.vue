@@ -90,6 +90,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { SmsChannel } from '@/api/system/sms/channel'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -128,7 +129,7 @@ const formRules = {
   status: [{ required: true, message: '启用状态不能为空' }],
   apiKey: [{ required: true, message: 'API 账号不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

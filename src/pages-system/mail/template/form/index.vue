@@ -97,6 +97,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { MailAccount } from '@/api/system/mail/account'
 import type { MailTemplate } from '@/api/system/mail/template'
 import { computed, onMounted, ref } from 'vue'
@@ -140,7 +141,7 @@ const formRules = {
   content: [{ required: true, message: '模板内容不能为空' }],
   status: [{ required: true, message: '开启状态不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 邮箱账号列表 */
 const accountList = ref<MailAccount[]>([])

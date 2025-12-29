@@ -103,6 +103,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { SocialClient } from '@/api/system/social/client'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -143,7 +144,7 @@ const formRules = {
   clientId: [{ required: true, message: '应用编号不能为空' }],
   clientSecret: [{ required: true, message: '应用密钥不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

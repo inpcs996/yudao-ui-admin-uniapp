@@ -74,6 +74,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { Category } from '@/api/bpm/category'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -109,7 +110,7 @@ const formRules = {
   code: [{ required: true, message: '分类标志不能为空' }],
   status: [{ required: true, message: '分类状态不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

@@ -35,6 +35,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import { computed, ref, watch } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { resetUserPassword } from '@/api/system/user'
@@ -55,7 +56,6 @@ const visible = computed({
   set: val => emit('update:modelValue', val),
 })
 const loading = ref(false)
-const formRef = ref()
 const formData = ref({
   password: '',
   confirmPassword: '',
@@ -71,6 +71,7 @@ const formRules = {
     },
   ],
 }
+const formRef = ref<FormInstance>()
 
 /** 监听弹窗打开，重置表单 */
 watch(

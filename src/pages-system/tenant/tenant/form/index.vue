@@ -110,6 +110,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { Tenant } from '@/api/system/tenant'
 import type { TenantPackage } from '@/api/system/tenant/package'
 import { computed, onMounted, ref } from 'vue'
@@ -157,7 +158,7 @@ const formRules = {
   username: [{ required: true, message: '用户名称不能为空' }],
   password: [{ required: true, message: '用户密码不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

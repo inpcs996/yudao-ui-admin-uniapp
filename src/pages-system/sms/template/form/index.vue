@@ -96,6 +96,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { SmsChannel } from '@/api/system/sms/channel'
 import type { SmsTemplate } from '@/api/system/sms/template'
 import { computed, onMounted, ref } from 'vue'
@@ -140,7 +141,7 @@ const formRules = {
   content: [{ required: true, message: '模板内容不能为空' }],
   apiTemplateId: [{ required: true, message: 'API 模板编号不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 短信渠道列表 */
 const channelList = ref<SmsChannel[]>([])

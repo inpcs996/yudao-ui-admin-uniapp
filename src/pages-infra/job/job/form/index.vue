@@ -89,6 +89,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { Job } from '@/api/infra/job'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -128,7 +129,7 @@ const formRules = {
   retryCount: [{ required: true, message: '重试次数不能为空' }],
   retryInterval: [{ required: true, message: '重试间隔不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {
