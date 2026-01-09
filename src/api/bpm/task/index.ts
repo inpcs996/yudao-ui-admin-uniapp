@@ -11,6 +11,10 @@ export interface TaskUser {
   deptName?: string
 }
 
+export interface OperationButtonSetting {
+  displayName: string // 按钮名称
+  enable: boolean // 是否启用
+}
 /** 流程任务 */
 export interface Task {
   id: string
@@ -24,6 +28,8 @@ export interface Task {
   ownerUser?: TaskUser
   processInstanceId?: string // 流程实例 ID
   processInstance: ProcessInstance
+  reasonRequire?: boolean // 是否填写审批意见
+  buttonsSetting?: Record<number, OperationButtonSetting> // 按钮设置
 }
 
 /** 查询待办任务分页列表 */

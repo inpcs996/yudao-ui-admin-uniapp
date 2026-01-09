@@ -88,29 +88,15 @@
 
     <!-- TODO 待开发：区域：流程评论 -->
 
-    <!-- 区域：底部操作栏 TODO @jason：抽成类似：/Users/yunai/Java/yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/processInstance/detail/modules/operation-button.vue -->
-    <view v-if="runningTask" class="yd-detail-footer">
-      <view class="yd-detail-footer-actions">
-        <wd-button type="error" plain class="flex-1" @click="handleReject">
-          拒绝
-        </wd-button>
-        <wd-button type="primary" class="flex-1" @click="handleApprove">
-          同意
-        </wd-button>
-      </view>
-      <!-- TODO @jason：审批通过、不通过：缺少签名、选择审批人 -->
-      <!-- TODO @jason：取消流程、重新发起 -->
-      <!-- TODO @jason：抄送、转派、委派、退回 -->
-      <!-- TODO @jason：加签、减签 -->
-    </view>
+    <!-- 区域：底部操作栏 -->
+    <ProcessInstanceOperationButton ref="operationButtonRef" />
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { ProcessDefinition, ProcessInstance } from '@/api/bpm/processInstance'
 import type { Task } from '@/api/bpm/task'
-import { onLoad } from '@dcloudio/uni-app'
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { getApprovalDetail } from '@/api/bpm/processInstance'
 import { getTaskListByProcessInstanceId } from '@/api/bpm/task'
@@ -118,6 +104,12 @@ import { useUserStore } from '@/store'
 import { navigateBackPlus } from '@/utils'
 import { formatDateTime, formatPast } from '@/utils/date'
 import FormDetail from './components/form-detail.vue'
+import ProcessInstanceOperationButton from './components/operation-button.vue'
+
+const props = defineProps<{
+  id: string // 流程实例的编号
+  taskId?: string // 任务编号
+}>()
 
 definePage({
   style: {
@@ -128,23 +120,13 @@ definePage({
 
 const userStore = useUserStore()
 const toast = useToast()
-const processInstanceId = ref('')
 const processInstance = ref<Partial<ProcessInstance>>({})
 const processDefinition = ref<Partial<ProcessDefinition>>({})
 const tasks = ref<Task[]>([])
 const orderAsc = ref(true)
 
-/** 当前用户需要处理的任务 */
-const runningTask = computed(() => {
-  return tasks.value.find((task) => {
-    // 待处理状态
-    if (task.status !== 1 && task.status !== 6) {
-      return false
-    }
-    // 当前用户是处理人
-    return task.assigneeUser?.id === userStore.userInfo?.id
-  })
-})
+// 操作按钮组件 ref
+const operationButtonRef = ref()
 
 /** 排序后的任务列表 */
 const sortedTasks = computed(() => {
@@ -244,46 +226,33 @@ function getStatusTextClass(status: number) {
   return 'text-[#999]'
 }
 
-/** 同意 */
-function handleApprove() {
-  if (!runningTask.value) {
-    return
-  }
-  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?id=${runningTask.value.id}&pass=true` })
-}
-
-/** 拒绝 */
-function handleReject() {
-  if (!runningTask.value) {
-    return
-  }
-  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?id=${runningTask.value.id}&pass=false` })
-}
-
 /** 加载流程实例 */
 async function loadProcessInstance() {
-  const data = await getApprovalDetail({ processInstanceId: processInstanceId.value })
+  const param = {
+    processInstanceId: props.id,
+    taskId: props.taskId,
+  }
+  const data = await getApprovalDetail(param)
   if (!data || !data.processInstance) {
     toast.show('查询不到审批详情信息')
     return
   }
   processInstance.value = data.processInstance
   processDefinition.value = data.processDefinition || {}
+  operationButtonRef.value?.loadTodoTask(data.todoTask)
 }
 
 /** 加载任务列表 */
 async function loadTasks() {
-  tasks.value = await getTaskListByProcessInstanceId(processInstanceId.value)
+  tasks.value = await getTaskListByProcessInstanceId(props.id)
 }
 
 /** 初始化 */
-onLoad(async (options) => {
-  // TODO @jason：通过 props id 处理；
-  if (!options?.id) {
+onMounted(async () => {
+  if (!props.id) {
     toast.show('参数错误')
     return
   }
-  processInstanceId.value = options.id
   await Promise.all([loadProcessInstance(), loadTasks()])
 })
 </script>
