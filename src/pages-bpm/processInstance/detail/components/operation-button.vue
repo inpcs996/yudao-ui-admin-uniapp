@@ -1,40 +1,39 @@
 <!-- 操作按钮 -->
 <template>
-  <view class="yd-detail-footer">
-    <!-- 有待审批的任务 -->
-    <view v-if="runningTask">
-      <view v-if="leftOperations.length > 0" class="w-full flex items-center">
-        <!-- 左侧操作按钮 -->
-        <view v-for="(action, idx) in leftOperations" :key="idx" class="mr-32rpx w-60rpx flex flex-col items-center" @click="handleOperation(action.operationType)">
-          <wd-icon :name="action.iconName" size="40rpx" color="#1890ff" />
-          <text class="mt-4rpx text-22rpx text-[#333]">{{ action.displayName }}</text>
-        </view>
-        <!-- 更多操作按钮 -->
-        <view v-if="moreOperations.length > 0" class="mr-32rpx w-60rpx flex flex-col items-center" @click="handleShowMore">
-          <wd-icon name="ellipsis" size="40rpx" color="#1890ff" />
-          <text class="mt-4rpx text-22rpx text-[#333]">更多</text>
-        </view>
-        <!-- 右侧按钮，TODO 是否一定要保留两个按钮 -->
-        <view class="flex flex-1 gap-16rpx">
-          <wd-button
-            v-for="(action, idx) in rightOperations"
-            :key="idx"
-            :plain="action.plain"
-            :type="action.btnType"
-            :round="false"
-            class="flex-1"
-            custom-style="min-width: 200rpx; width: 200rpx;"
-            @click="handleOperation(action.operationType)"
-          >
-            {{ action.displayName }}
-          </wd-button>
-        </view>
+  <!-- 有待审批的任务 -->
+  <view v-if="runningTask" class="yd-detail-footer">
+    <view class="w-full flex items-center">
+      <!-- 左侧操作按钮 -->
+      <view v-for="(action, idx) in leftOperations" :key="idx" class="mr-32rpx w-60rpx flex flex-col items-center" @click="handleOperation(action.operationType)">
+        <wd-icon :name="action.iconName" size="40rpx" color="#1890ff" />
+        <text class="mt-4rpx text-22rpx text-[#333]">{{ action.displayName }}</text>
+      </view>
+      <!-- 更多操作按钮 -->
+      <view v-if="moreOperations.length > 0" class="mr-32rpx w-60rpx flex flex-col items-center" @click="handleShowMore">
+        <wd-icon name="ellipsis" size="40rpx" color="#1890ff" />
+        <text class="mt-4rpx text-22rpx text-[#333]">更多</text>
       </view>
       <!-- 更多操作 ActionSheet -->
       <wd-action-sheet v-if="moreOperations.length > 0" v-model="showMoreActions" :actions="moreOperations" title="请选择操作" @select="handleMoreAction" />
+
+      <!-- 右侧按钮，TODO 是否一定要保留两个按钮 -->
+      <view class="flex flex-1 gap-16rpx">
+        <wd-button
+          v-for="(action, idx) in rightOperations"
+          :key="idx"
+          :plain="action.plain"
+          :type="action.btnType"
+          :round="false"
+          class="flex-1"
+          custom-style="min-width: 200rpx; width: 200rpx;"
+          @click="handleOperation(action.operationType)"
+        >
+          {{ action.displayName }}
+        </wd-button>
+      </view>
     </view>
-    <!-- TODO 无待审批的任务 需要显示什么 -->
   </view>
+  <!-- TODO 无待审批的任务 需要显示什么 -->
 </template>
 
 <script lang="ts" setup>
@@ -91,7 +90,7 @@ function loadTodoTask(task: Task) {
   if (task) {
     reasonRequire.value = task.reasonRequire ?? false
     // 右侧按钮
-    if (isHandleTaskStatus() && task.buttonsSetting[BpmTaskOperationButtonTypeEnum.REJECT]?.enable) {
+    if (isHandleTaskStatus() && task.buttonsSetting && task.buttonsSetting[BpmTaskOperationButtonTypeEnum.REJECT]?.enable) {
       rightOperationTypes.push(BpmTaskOperationButtonTypeEnum.REJECT)
       rightOperations.value.push({
         operationType: BpmTaskOperationButtonTypeEnum.REJECT,
@@ -100,7 +99,7 @@ function loadTodoTask(task: Task) {
         plain: true,
       })
     }
-    if (isHandleTaskStatus() && task.buttonsSetting[BpmTaskOperationButtonTypeEnum.APPROVE]?.enable) {
+    if (isHandleTaskStatus() && task.buttonsSetting && task.buttonsSetting[BpmTaskOperationButtonTypeEnum.APPROVE]?.enable) {
       rightOperationTypes.push(BpmTaskOperationButtonTypeEnum.APPROVE)
       rightOperations.value.push({
         operationType: BpmTaskOperationButtonTypeEnum.APPROVE,
@@ -109,6 +108,7 @@ function loadTodoTask(task: Task) {
         plain: false,
       })
     }
+    console.log('rightOperationTypes====>', rightOperationTypes)
     // TODO 减签
     // 左侧操作，和更多操作
     Object.keys(task.buttonsSetting || {}).forEach((key) => {
@@ -157,7 +157,9 @@ function handleOperation(operationType: number) {
       toast.show('加签功能待实现')
       break
     case BpmTaskOperationButtonTypeEnum.RETURN:
-      toast.show('退回功能待实现')
+      uni.navigateTo({
+        url: `/pages-bpm/processInstance/detail/return/index?processInstanceId=${runningTask.value.processInstanceId}&taskId=${runningTask.value.id}`,
+      })
       break
   }
 }

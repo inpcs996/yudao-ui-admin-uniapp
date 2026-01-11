@@ -71,3 +71,13 @@ export function delegateTask(data: { id: string, delegateUserId: string, reason:
 export function transferTask(data: { id: string, assigneeUserId: string, reason: string }) {
   return http.put<boolean>('/bpm/task/transfer', data)
 }
+
+/** 退回任务 */
+export function returnTask(data: { id: string, targetTaskDefinitionKey: string, reason: string }) {
+  return http.put<boolean>('/bpm/task/return', data)
+}
+
+/** 获取可退回的节点列表 */
+export function getTaskListByReturn(taskId: string) {
+  return http.get<any[]>(`/bpm/task/list-by-return?id=${taskId}`)
+}
