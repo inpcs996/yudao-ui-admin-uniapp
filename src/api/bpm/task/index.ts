@@ -61,3 +61,13 @@ export function getTaskListByProcessInstanceId(processInstanceId: string) {
 export function getTaskManagerPage(params: PageParam) {
   return http.get<PageResult<Task>>('/bpm/task/manager-page', params)
 }
+
+/** 委派任务 */
+export function delegateTask(data: { id: string, delegateUserId: string, reason: string }) {
+  return http.put<boolean>('/bpm/task/delegate', data)
+}
+
+/** 转办任务 */
+export function transferTask(data: { id: string, assigneeUserId: string, reason: string }) {
+  return http.put<boolean>('/bpm/task/transfer', data)
+}

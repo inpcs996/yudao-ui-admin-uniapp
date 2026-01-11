@@ -144,10 +144,14 @@ function handleOperation(operationType: number) {
       uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?id=${runningTask.value.id}&pass=false` })
       break
     case BpmTaskOperationButtonTypeEnum.DELEGATE:
-      toast.show('委派功能待实现')
+      uni.navigateTo({
+        url: `/pages-bpm/processInstance/detail/reassign/index?processInstanceId=${runningTask.value.processInstanceId}&taskId=${runningTask.value.id}&type=delegate`,
+      })
       break
     case BpmTaskOperationButtonTypeEnum.TRANSFER:
-      toast.show('转办功能待实现')
+      uni.navigateTo({
+        url: `/pages-bpm/processInstance/detail/reassign/index?processInstanceId=${runningTask.value.processInstanceId}&taskId=${runningTask.value.id}&type=transfer`,
+      })
       break
     case BpmTaskOperationButtonTypeEnum.ADD_SIGN:
       toast.show('加签功能待实现')
