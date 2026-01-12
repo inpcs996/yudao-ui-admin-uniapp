@@ -108,7 +108,6 @@ function loadTodoTask(task: Task) {
         plain: false,
       })
     }
-    console.log('rightOperationTypes====>', rightOperationTypes)
     // TODO 减签
     // 左侧操作，和更多操作
     Object.keys(task.buttonsSetting || {}).forEach((key) => {
@@ -154,7 +153,9 @@ function handleOperation(operationType: number) {
       })
       break
     case BpmTaskOperationButtonTypeEnum.ADD_SIGN:
-      toast.show('加签功能待实现')
+      uni.navigateTo({
+        url: `/pages-bpm/processInstance/detail/add-sign/index?processInstanceId=${runningTask.value.processInstanceId}&taskId=${runningTask.value.id}`,
+      })
       break
     case BpmTaskOperationButtonTypeEnum.RETURN:
       uni.navigateTo({

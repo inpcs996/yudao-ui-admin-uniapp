@@ -81,3 +81,8 @@ export function returnTask(data: { id: string, targetTaskDefinitionKey: string, 
 export function getTaskListByReturn(taskId: string) {
   return http.get<any[]>(`/bpm/task/list-by-return?id=${taskId}`)
 }
+
+/** 加签任务 */
+export function signCreateTask(data: { id: string, type: string, userIds: number[], reason: string }) {
+  return http.put<boolean>('/bpm/task/create-sign', data)
+}
