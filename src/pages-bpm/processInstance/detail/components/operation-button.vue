@@ -33,12 +33,24 @@
       </view>
     </view>
   </view>
-  <!-- TODO 无待审批的任务 需要显示什么 -->
+  <!--  无待审批的任务 仅显示取消按钮。TODO 看看还需要显示 -->
+  <view v-if="!runningTask && isShowProcessStartCancel()" class="yd-detail-footer">
+    <wd-button
+      plain
+      type="primary"
+      :round="false"
+      block
+      @click="handleOperation(BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL)"
+    >
+      取消
+    </wd-button>
+  </view>
 </template>
 
 <script lang="ts" setup>
 import type { Action } from 'wot-design-uni/components/wd-action-sheet/types'
 import type { ButtonType } from 'wot-design-uni/components/wd-button/types'
+import type { ProcessInstance } from '@/api/bpm/processInstance'
 import type { Task } from '@/api/bpm/task'
 import { useToast } from 'wot-design-uni'
 import { useUserStore } from '@/store'
@@ -74,23 +86,26 @@ const operationIconsMap: Record<number, string> = {
   [BpmTaskOperationButtonTypeEnum.RETURN]: 'arrow-left',
   [BpmTaskOperationButtonTypeEnum.COPY]: 'copy',
   [BpmTaskOperationButtonTypeEnum.DELETE_SIGN]: 'remove',
+  [BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL]: 'stop-circle',
 }
 
 const userStore = useUserStore()
 /** 左侧操作按钮 【最多两个】{转办, 委派, 退回, 加签， 抄送等} */
 const leftOperations = ref<LeftOperationType[]>([])
 
-/** 右侧操作按钮【最多两个】{通过，拒绝, 取消,减签} */
+/** 右侧操作按钮【最多两个】{通过，拒绝, 取消} */
 const rightOperationTypes = []
 const rightOperations = ref<RightOperationType[]>([])
 /** 更多操作 */
 const moreOperations = ref<MoreOperationType[]>([])
 const toast = useToast()
 const runningTask = ref<Task>()
+const processInstance = ref<ProcessInstance>()
 const reasonRequire = ref<boolean>(false)
 
-/** 加载待办任务 */
-function loadTodoTask(task: Task) {
+/** 初始化 */
+function init(theProcessInstance: ProcessInstance, task: Task) {
+  processInstance.value = theProcessInstance
   runningTask.value = task
   if (task) {
     reasonRequire.value = task.reasonRequire ?? false
@@ -149,12 +164,35 @@ function loadTodoTask(task: Task) {
       }
     }
   }
+
+  // 是否显示流程取消
+  if (isShowProcessStartCancel()) {
+    if (rightOperationTypes.length < 2) {
+      rightOperationTypes.push(BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL)
+      rightOperations.value.push({
+        operationType: BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL,
+        displayName: getButtonDisplayName(BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL),
+        btnType: 'primary',
+        plain: true,
+      })
+    } else {
+      if (leftOperations.value.length >= 2) {
+        moreOperations.value.push({
+          name: getButtonDisplayName(BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL),
+          operationType: BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL,
+        })
+      } else {
+        leftOperations.value.push({
+          operationType: BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL,
+          iconName: operationIconsMap[BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL],
+          displayName: getButtonDisplayName(BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL),
+        })
+      }
+    }
+  }
 }
 /** 跳转到相应的操作页面 */
 function handleOperation(operationType: number) {
-  if (!runningTask.value) {
-    return
-  }
   switch (operationType) {
     case BpmTaskOperationButtonTypeEnum.APPROVE:
       uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?id=${runningTask.value.id}&pass=true` })
@@ -185,6 +223,11 @@ function handleOperation(operationType: number) {
     case BpmTaskOperationButtonTypeEnum.DELETE_SIGN:
       uni.navigateTo({
         url: `/pages-bpm/processInstance/detail/delete-sign/index?processInstanceId=${runningTask.value.processInstanceId}&taskId=${runningTask.value.id}&children=${encodeURIComponent(JSON.stringify(runningTask.value.children || []))}`,
+      })
+      break
+    case BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL:
+      uni.navigateTo({
+        url: `/pages-bpm/processInstance/detail/process-cancel/index?processInstanceId=${processInstance.value.id}&taskId=${runningTask.value?.id}`,
       })
       break
   }
@@ -250,7 +293,7 @@ function isEndProcessStatus(status: number) {
 /** 流程发起人是否为当前用户 */
 function isProcessStartUser() {
   let isStartUser = false
-  if (userStore.userInfo?.userId === runningTask.value?.processInstance?.startUser?.id) {
+  if (userStore.userInfo?.userId === processInstance.value?.startUser?.id) {
     isStartUser = true
   }
   return isStartUser
@@ -263,9 +306,9 @@ function isShowDeleteSign() {
 
 /** 是否显示流程发起人取消 */
 function isShowProcessStartCancel() {
-  return isProcessStartUser
+  return isProcessStartUser() && !isEndProcessStatus(processInstance.value?.status)
 }
 
 /** 暴露方法 */
-defineExpose({ loadTodoTask })
+defineExpose({ init })
 </script>

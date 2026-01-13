@@ -152,6 +152,10 @@ export enum BpmTaskOperationButtonTypeEnum {
    */
   DELETE_SIGN = 8,
   /**
+   * 流程发起人取消
+   */
+  PROCESS_START_CANCEL = 9,
+  /**
    * 拒绝
    */
   REJECT = 2,
@@ -163,7 +167,6 @@ export enum BpmTaskOperationButtonTypeEnum {
    * 转办
    */
   TRANSFER = 3,
-
 }
 
 /**
@@ -292,6 +295,7 @@ OPERATION_BUTTON_NAME.set(BpmTaskOperationButtonTypeEnum.ADD_SIGN, '加签')
 OPERATION_BUTTON_NAME.set(BpmTaskOperationButtonTypeEnum.RETURN, '退回')
 OPERATION_BUTTON_NAME.set(BpmTaskOperationButtonTypeEnum.COPY, '抄送')
 OPERATION_BUTTON_NAME.set(BpmTaskOperationButtonTypeEnum.DELETE_SIGN, '减签')
+OPERATION_BUTTON_NAME.set(BpmTaskOperationButtonTypeEnum.PROCESS_START_CANCEL, '取消')
 
 /**
  * 流程实例的变量枚举

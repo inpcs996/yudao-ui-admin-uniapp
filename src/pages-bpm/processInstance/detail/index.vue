@@ -12,32 +12,31 @@
       <view class="p-24rpx">
         <!-- 标题和状态 -->
         <view class="mb-16rpx flex items-center justify-between">
-          <text class="text-32rpx text-[#333] font-bold">{{ processInstance.name }}</text>
-          <wd-tag :type="getStatusType(processInstance.status)">
-            {{ getStatusText(processInstance.status) }}
+          <text class="text-32rpx text-[#333] font-bold">{{ processInstance?.name }}</text>
+          <wd-tag :type="getStatusType(processInstance?.status)">
+            {{ getStatusText(processInstance?.status) }}
           </wd-tag>
         </view>
         <!-- 发起人信息 -->
         <view class="flex items-center">
           <view class="mr-12rpx h-64rpx w-64rpx flex items-center justify-center rounded-full bg-[#1890ff] text-white">
-            {{ processInstance.startUser?.nickname?.[0] || '?' }}
+            {{ processInstance?.startUser?.nickname?.[0] || '?' }}
           </view>
           <view>
-            <text class="text-28rpx text-[#333]">{{ processInstance.startUser?.nickname }}</text>
-            <text v-if="processInstance.startUser?.deptName" class="ml-8rpx text-24rpx text-[#999]">
-              {{ processInstance.startUser?.deptName }}
+            <text class="text-28rpx text-[#333]">{{ processInstance?.startUser?.nickname }}</text>
+            <text v-if="processInstance?.startUser?.deptName" class="ml-8rpx text-24rpx text-[#999]">
+              {{ processInstance?.startUser?.deptName }}
             </text>
           </view>
         </view>
         <!-- 提交时间 -->
         <view class="mt-16rpx text-24rpx text-[#999]">
-          提交于 {{ formatDateTime(processInstance.startTime) }}
+          提交于 {{ formatDateTime(processInstance?.startTime) }}
         </view>
       </view>
     </view>
 
     <!-- 区域：审批详情（表单） -->
-    <!-- TODO @jason：看看 idea 告警，怎么优化下 -->
     <FormDetail :process-definition="processDefinition" :process-instance="processInstance" />
 
     <!-- 区域：审批记录 TODO @jason：抽成类似 /Users/yunai/Java/yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/processInstance/detail/modules/task-list.vue -->
@@ -89,7 +88,7 @@
     <!-- TODO 待开发：区域：流程评论 -->
 
     <!-- 区域：底部操作栏 -->
-    <ProcessInstanceOperationButton ref="operationButtonRef" />
+    <ProcessInstanceOperationButton ref="operationButtonRef" :process-instance="processInstance" />
   </view>
 </template>
 
@@ -120,8 +119,8 @@ definePage({
 
 const userStore = useUserStore()
 const toast = useToast()
-const processInstance = ref<Partial<ProcessInstance>>({})
-const processDefinition = ref<Partial<ProcessDefinition>>({})
+const processInstance = ref<ProcessInstance>()
+const processDefinition = ref<ProcessDefinition>()
 const tasks = ref<Task[]>([])
 const orderAsc = ref(true)
 
@@ -238,8 +237,8 @@ async function loadProcessInstance() {
     return
   }
   processInstance.value = data.processInstance
-  processDefinition.value = data.processDefinition || {}
-  operationButtonRef.value?.loadTodoTask(data.todoTask)
+  processDefinition.value = data.processDefinition
+  operationButtonRef.value?.init(data.processInstance, data.todoTask)
 }
 
 /** 加载任务列表 */
