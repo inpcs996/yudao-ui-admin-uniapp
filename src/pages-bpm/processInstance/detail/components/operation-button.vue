@@ -41,7 +41,9 @@ import type { Action } from 'wot-design-uni/components/wd-action-sheet/types'
 import type { ButtonType } from 'wot-design-uni/components/wd-button/types'
 import type { Task } from '@/api/bpm/task'
 import { useToast } from 'wot-design-uni'
+import { useUserStore } from '@/store'
 import {
+  BpmProcessInstanceStatus,
   BpmTaskOperationButtonTypeEnum,
   BpmTaskStatusEnum,
   OPERATION_BUTTON_NAME,
@@ -71,7 +73,10 @@ const operationIconsMap: Record<number, string> = {
   [BpmTaskOperationButtonTypeEnum.DELEGATE]: 'share',
   [BpmTaskOperationButtonTypeEnum.RETURN]: 'arrow-left',
   [BpmTaskOperationButtonTypeEnum.COPY]: 'copy',
+  [BpmTaskOperationButtonTypeEnum.DELETE_SIGN]: 'remove',
 }
+
+const userStore = useUserStore()
 /** 左侧操作按钮 【最多两个】{转办, 委派, 退回, 加签， 抄送等} */
 const leftOperations = ref<LeftOperationType[]>([])
 
@@ -90,7 +95,7 @@ function loadTodoTask(task: Task) {
   if (task) {
     reasonRequire.value = task.reasonRequire ?? false
     // 右侧按钮
-    if (isHandleTaskStatus() && task.buttonsSetting && task.buttonsSetting[BpmTaskOperationButtonTypeEnum.REJECT]?.enable) {
+    if (isHandleTaskStatus() && isShowButton(BpmTaskOperationButtonTypeEnum.REJECT)) {
       rightOperationTypes.push(BpmTaskOperationButtonTypeEnum.REJECT)
       rightOperations.value.push({
         operationType: BpmTaskOperationButtonTypeEnum.REJECT,
@@ -99,7 +104,7 @@ function loadTodoTask(task: Task) {
         plain: true,
       })
     }
-    if (isHandleTaskStatus() && task.buttonsSetting && task.buttonsSetting[BpmTaskOperationButtonTypeEnum.APPROVE]?.enable) {
+    if (isHandleTaskStatus() && isShowButton(BpmTaskOperationButtonTypeEnum.APPROVE)) {
       rightOperationTypes.push(BpmTaskOperationButtonTypeEnum.APPROVE)
       rightOperations.value.push({
         operationType: BpmTaskOperationButtonTypeEnum.APPROVE,
@@ -108,7 +113,7 @@ function loadTodoTask(task: Task) {
         plain: false,
       })
     }
-    // TODO 减签
+
     // 左侧操作，和更多操作
     Object.keys(task.buttonsSetting || {}).forEach((key) => {
       const operationType = Number(key)
@@ -128,6 +133,21 @@ function loadTodoTask(task: Task) {
         }
       }
     })
+    /** 减签操作的显示 */
+    if (isShowDeleteSign()) {
+      if (leftOperations.value.length >= 2) {
+        moreOperations.value.push({
+          name: getButtonDisplayName(BpmTaskOperationButtonTypeEnum.DELETE_SIGN),
+          operationType: BpmTaskOperationButtonTypeEnum.DELETE_SIGN,
+        })
+      } else {
+        leftOperations.value.push({
+          operationType: BpmTaskOperationButtonTypeEnum.DELETE_SIGN,
+          iconName: operationIconsMap[BpmTaskOperationButtonTypeEnum.DELETE_SIGN],
+          displayName: getButtonDisplayName(BpmTaskOperationButtonTypeEnum.DELETE_SIGN),
+        })
+      }
+    }
   }
 }
 /** 跳转到相应的操作页面 */
@@ -160,6 +180,11 @@ function handleOperation(operationType: number) {
     case BpmTaskOperationButtonTypeEnum.RETURN:
       uni.navigateTo({
         url: `/pages-bpm/processInstance/detail/return/index?processInstanceId=${runningTask.value.processInstanceId}&taskId=${runningTask.value.id}`,
+      })
+      break
+    case BpmTaskOperationButtonTypeEnum.DELETE_SIGN:
+      uni.navigateTo({
+        url: `/pages-bpm/processInstance/detail/delete-sign/index?processInstanceId=${runningTask.value.processInstanceId}&taskId=${runningTask.value.id}&children=${encodeURIComponent(JSON.stringify(runningTask.value.children || []))}`,
       })
       break
   }
@@ -207,6 +232,38 @@ function isHandleTaskStatus() {
     canHandle = true
   }
   return canHandle
+}
+
+/** 流程状态是否为结束状态 */
+function isEndProcessStatus(status: number) {
+  let isEndStatus = false
+  if (
+    BpmProcessInstanceStatus.APPROVE === status
+    || BpmProcessInstanceStatus.REJECT === status
+    || BpmProcessInstanceStatus.CANCEL === status
+  ) {
+    isEndStatus = true
+  }
+  return isEndStatus
+}
+
+/** 流程发起人是否为当前用户 */
+function isProcessStartUser() {
+  let isStartUser = false
+  if (userStore.userInfo?.userId === runningTask.value?.processInstance?.startUser?.id) {
+    isStartUser = true
+  }
+  return isStartUser
+}
+
+/** 是否显示减签 */
+function isShowDeleteSign() {
+  return runningTask.value?.children?.length > 0
+}
+
+/** 是否显示流程发起人取消 */
+function isShowProcessStartCancel() {
+  return isProcessStartUser
 }
 
 /** 暴露方法 */

@@ -30,6 +30,7 @@ export interface Task {
   processInstance: ProcessInstance
   reasonRequire?: boolean // 是否填写审批意见
   buttonsSetting?: Record<number, OperationButtonSetting> // 按钮设置
+  children?: Task[] // 由加签生成，包含多层子任务
 }
 
 /** 查询待办任务分页列表 */
@@ -85,4 +86,9 @@ export function getTaskListByReturn(taskId: string) {
 /** 加签任务 */
 export function signCreateTask(data: { id: string, type: string, userIds: number[], reason: string }) {
   return http.put<boolean>('/bpm/task/create-sign', data)
+}
+
+/** 减签任务 */
+export function signDeleteTask(data: { id: string, reason: string }) {
+  return http.delete<boolean>('/bpm/task/delete-sign', data)
 }
