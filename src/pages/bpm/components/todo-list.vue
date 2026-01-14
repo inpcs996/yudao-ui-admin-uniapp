@@ -118,7 +118,7 @@ function handleReset() {
 
 /** 查看详情 */
 function handleDetail(item: Task) {
-  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/index?id=${item.processInstance.id}` })
+  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/index?id=${item.processInstance.id}&taskId=${item.id}` })
 }
 
 /** 同意 */

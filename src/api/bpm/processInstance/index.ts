@@ -1,3 +1,4 @@
+import type { Task } from '@/api/bpm/task'
 import type { PageParam, PageResult } from '@/http/types'
 import { http } from '@/http/http'
 
@@ -47,6 +48,7 @@ export interface ProcessInstance {
 export interface ApprovalDetail {
   processInstance: ProcessInstance
   processDefinition: ProcessDefinition
+  todoTask: Task
 }
 
 /** 抄送流程实例 */
