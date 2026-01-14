@@ -74,14 +74,11 @@ const taskId = computed(() => props.taskId)
 const processInstanceId = computed(() => props.processInstanceId)
 const toast = useToast()
 const submitting = ref(false)
-const formRef = ref<FormInstance>()
 const activityOptions = ref<any[]>([])
-
 const formData = reactive({
   targetActivityId: '',
   reason: '',
 })
-
 const formRules = {
   targetActivityId: [
     { required: true, message: '退回节点不能为空' },
@@ -90,6 +87,7 @@ const formRules = {
     { required: true, message: '退回原因不能为空' },
   ],
 }
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {
@@ -97,6 +95,7 @@ function handleBack() {
 }
 
 /** 初始化校验 */
+// TODO @jason：最好放在 onMounted 里？或者其他地方，有个入口方法。
 if (!props.taskId || !props.processInstanceId) {
   toast.show('参数错误')
 }
@@ -105,10 +104,12 @@ if (!props.taskId || !props.processInstanceId) {
 async function loadReturnTaskList() {
   try {
     const result = await getTaskListByReturn(taskId.value)
+    // TODO @jason：这个判断可以考虑去掉哈。
     if (result && Array.isArray(result)) {
       activityOptions.value = result
     }
   } catch (error) {
+    // TODO @jason：错误处理，这里可以去掉哈。
     console.error('[return] 获取可退回节点失败:', error)
     toast.error('获取可退回节点失败')
   }
@@ -116,32 +117,33 @@ async function loadReturnTaskList() {
 
 /** 提交操作 */
 async function handleSubmit() {
-  if (submitting.value)
+  if (submitting.value) {
     return
-
-  // 使用 wd-form 的校验方法
+  }
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
   }
 
+  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
   submitting.value = true
   try {
+    // TODO @jason：这里是不是不用判断 result 哈？
     const result = await returnTask({
       id: taskId.value as string,
       targetTaskDefinitionKey: formData.targetActivityId,
       reason: formData.reason,
     })
-
     if (result) {
       toast.success('退回成功')
       setTimeout(() => {
         uni.redirectTo({
           url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
         })
-      }, 1500)
+      }, 500)
     }
   } catch (error) {
+    // TODO @jason：可以不用这里的 catch 哈？
     console.error('[return] 退回失败:', error)
     toast.error('退回失败')
   } finally {

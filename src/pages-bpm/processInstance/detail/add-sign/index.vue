@@ -85,13 +85,10 @@ const taskId = computed(() => props.taskId)
 const processInstanceId = computed(() => props.processInstanceId)
 const toast = useToast()
 const submitting = ref(false)
-const formRef = ref<FormInstance>()
-
 const formData = reactive({
   userIds: [] as number[],
   reason: '',
 })
-
 const formRules = {
   userIds: [
     { required: true, message: '加签处理人不能为空', validator: (value: number[]) => value.length > 0 },
@@ -100,12 +97,14 @@ const formRules = {
     { required: true, message: '审批意见不能为空' },
   ],
 }
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`)
 }
 
+// TODO @jason：最好放在 onMounted 里？或者其他地方，有个入口方法。
 /** 初始化校验 */
 if (!props.taskId || !props.processInstanceId) {
   toast.show('参数错误')
@@ -113,23 +112,24 @@ if (!props.taskId || !props.processInstanceId) {
 
 /** 提交操作 */
 async function handleSubmit(type: 'before' | 'after') {
-  if (submitting.value)
+  if (submitting.value) {
     return
-
-  // 使用 wd-form 的校验方法
+  }
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
   }
+
+  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
   submitting.value = true
   try {
+    // TODO @jason：这里是不是不用判断 result 哈？
     const result = await signCreateTask({
       id: taskId.value as string,
       type,
       userIds: formData.userIds,
       reason: formData.reason,
     })
-
     if (result) {
       const actionText = type === 'before' ? '向前加签' : '向后加签'
       toast.success(`${actionText}成功`)
@@ -137,9 +137,10 @@ async function handleSubmit(type: 'before' | 'after') {
         uni.redirectTo({
           url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
         })
-      }, 1500)
+      }, 500)
     }
   } catch (error) {
+    // TODO @jason：可以不用这里的 catch 哈？
     const actionText = type === 'before' ? '向前加签' : '向后加签'
     console.error(`[add-sign] ${actionText}失败:`, error)
     toast.error(`${actionText}失败`)

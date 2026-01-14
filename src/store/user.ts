@@ -63,7 +63,7 @@ export const useUserStore = defineStore(
     /** 获取用户信息 */
     const fetchUserInfo = async () => {
       const res = await getAuthPermissionInfo()
-      // 后端返回的用户 Id 字段为 id.
+      // 兼容：后端返回的用户 id 字段为 id
       res.user.userId = res.user.id
       setUserInfo(res)
       return res

@@ -16,7 +16,7 @@
       <!-- 更多操作 ActionSheet -->
       <wd-action-sheet v-if="moreOperations.length > 0" v-model="showMoreActions" :actions="moreOperations" title="请选择操作" @select="handleMoreAction" />
 
-      <!-- 右侧按钮，TODO 是否一定要保留两个按钮 -->
+      <!-- 右侧按钮，TODO @jason：是否一定要保留两个按钮（需要的哈） -->
       <view class="flex flex-1 gap-16rpx">
         <wd-button
           v-for="(action, idx) in rightOperations"
@@ -33,7 +33,7 @@
       </view>
     </view>
   </view>
-  <!--  无待审批的任务 仅显示取消按钮。TODO 看看还需要显示 -->
+  <!--  无待审批的任务 仅显示取消按钮。TODO @jason：看看还需要显示（这个微信交流下） -->
   <view v-if="!runningTask && isShowProcessStartCancel()" class="yd-detail-footer">
     <wd-button
       plain
@@ -90,6 +90,7 @@ const operationIconsMap: Record<number, string> = {
 }
 
 const userStore = useUserStore()
+// TODO @jason：字段注释，使用尾注释哈；
 /** 左侧操作按钮 【最多两个】{转办, 委派, 退回, 加签， 抄送等} */
 const leftOperations = ref<LeftOperationType[]>([])
 
@@ -98,7 +99,6 @@ const rightOperationTypes = []
 const rightOperations = ref<RightOperationType[]>([])
 /** 更多操作 */
 const moreOperations = ref<MoreOperationType[]>([])
-const toast = useToast()
 const runningTask = ref<Task>()
 const processInstance = ref<ProcessInstance>()
 const reasonRequire = ref<boolean>(false)
@@ -109,6 +109,7 @@ function init(theProcessInstance: ProcessInstance, task: Task) {
   runningTask.value = task
   if (task) {
     reasonRequire.value = task.reasonRequire ?? false
+    // TODO @jason：这里的判断，是否可以简化哈？就是默认计算出按钮，然后根据数量，去渲染具体的按钮。
     // 右侧按钮
     if (isHandleTaskStatus() && isShowButton(BpmTaskOperationButtonTypeEnum.REJECT)) {
       rightOperationTypes.push(BpmTaskOperationButtonTypeEnum.REJECT)
@@ -148,7 +149,8 @@ function init(theProcessInstance: ProcessInstance, task: Task) {
         }
       }
     })
-    /** 减签操作的显示 */
+
+    // 减签操作的显示
     if (isShowDeleteSign()) {
       if (leftOperations.value.length >= 2) {
         moreOperations.value.push({
@@ -191,6 +193,7 @@ function init(theProcessInstance: ProcessInstance, task: Task) {
     }
   }
 }
+
 /** 跳转到相应的操作页面 */
 function handleOperation(operationType: number) {
   switch (operationType) {

@@ -72,17 +72,15 @@ const processInstanceId = computed(() => props.processInstanceId)
 const taskId = computed(() => props.taskId)
 const toast = useToast()
 const submitting = ref(false)
-const formRef = ref<FormInstance>()
-
 const formData = reactive({
   cancelReason: '',
 })
-
 const formRules = {
   cancelReason: [
     { required: true, message: '取消理由不能为空' },
   ],
 }
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {
@@ -99,31 +97,32 @@ if (!props.processInstanceId) {
 
 /** 提交操作 */
 async function handleSubmit() {
-  if (submitting.value)
+  if (submitting.value) {
     return
-
-  // 使用 wd-form 的校验方法
+  }
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
   }
 
+  // TODO @jason：最好放在 onMounted 里？或者其他地方，有个入口方法。
   submitting.value = true
   try {
+    // TODO @jason：不判断 result 可以哇？
     const result = await cancelProcessInstanceByStartUser(
       processInstanceId.value,
       formData.cancelReason,
     )
-
     if (result) {
       toast.success('流程取消成功')
       setTimeout(() => {
         uni.redirectTo({
           url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}`,
         })
-      }, 1500)
+      }, 500)
     }
   } catch (error) {
+    // TODO @jason：错误处理，这里可以去掉哈。
     console.error('[process-cancel] 取消流程失败:', error)
     toast.error('取消流程失败')
   } finally {

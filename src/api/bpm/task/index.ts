@@ -11,10 +11,12 @@ export interface TaskUser {
   deptName?: string
 }
 
+/** 操作按钮设置 */
 export interface OperationButtonSetting {
   displayName: string // 按钮名称
   enable: boolean // 是否启用
 }
+
 /** 流程任务 */
 export interface Task {
   id: string

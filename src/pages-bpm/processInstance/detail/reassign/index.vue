@@ -76,13 +76,10 @@ const operationType = computed(() => props.type || 'transfer') // 默认转办
 const isDelegate = computed(() => operationType.value === 'delegate')
 const toast = useToast()
 const submitting = ref(false)
-const formRef = ref<FormInstance>()
-
 const formData = reactive({
   userId: undefined as number | undefined,
   reason: '',
 })
-
 const formRules = {
   userId: [
     { required: true, message: `请选择${isDelegate.value ? '接收人' : '新审批人'}` },
@@ -91,6 +88,7 @@ const formRules = {
     { required: true, message: '审批意见不能为空' },
   ],
 }
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {
@@ -98,52 +96,51 @@ function handleBack() {
 }
 
 /** 初始化校验 */
+// TODO @jason：最好放在 onMounted 里？或者其他地方，有个入口方法。
 if (!props.taskId || !props.processInstanceId) {
   toast.show('参数错误')
 }
 
 /** 提交操作 */
 async function handleSubmit() {
-  if (submitting.value)
+  if (submitting.value) {
     return
-
-  // 使用 wd-form 的校验方法
+  }
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
   }
 
+  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
   submitting.value = true
   try {
     const data = {
       id: taskId.value as string,
       reason: formData.reason,
     }
-
-    let result
+    // todo @jason：这里是不是不用判断 result 哈？
+    let result: boolean
     if (isDelegate.value) {
-      // 委派
       result = await delegateTask({
         ...data,
         delegateUserId: String(formData.userId),
       })
     } else {
-      // 转办
       result = await transferTask({
         ...data,
         assigneeUserId: String(formData.userId),
       })
     }
-
     if (result) {
       toast.success(`${isDelegate.value ? '委派' : '转办'}成功`)
       setTimeout(() => {
         uni.redirectTo({
           url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
         })
-      }, 1500)
+      }, 500)
     }
   } catch (error) {
+    // TODO @jason：可以不用这里的 catch 哈？
     console.error(`[reassign] ${isDelegate.value ? '委派' : '转办'}失败:`, error)
     toast.error(`${isDelegate.value ? '委派' : '转办'}失败`)
   } finally {

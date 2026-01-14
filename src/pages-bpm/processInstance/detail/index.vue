@@ -117,19 +117,18 @@ definePage({
   },
 })
 
-const userStore = useUserStore()
 const toast = useToast()
 const processInstance = ref<ProcessInstance>()
 const processDefinition = ref<ProcessDefinition>()
 const tasks = ref<Task[]>([])
 const orderAsc = ref(true)
 
-// 操作按钮组件 ref
-const operationButtonRef = ref()
+const operationButtonRef = ref() // 操作按钮组件 ref
 
 /** 排序后的任务列表 */
 const sortedTasks = computed(() => {
   const list = [...tasks.value].filter(t => t.status !== 4) // 过滤已取消
+  // TODO @jason：这里有红色报错，看看 fix 下哇？或者这块排序逻辑去掉，貌似没啥用。
   list.sort((a, b) => {
     if (a.endTime && b.endTime) {
       return orderAsc.value ? a.endTime - b.endTime : b.endTime - a.endTime
@@ -227,11 +226,10 @@ function getStatusTextClass(status: number) {
 
 /** 加载流程实例 */
 async function loadProcessInstance() {
-  const param = {
+  const data = await getApprovalDetail({
     processInstanceId: props.id,
     taskId: props.taskId,
-  }
-  const data = await getApprovalDetail(param)
+  })
   if (!data || !data.processInstance) {
     toast.show('查询不到审批详情信息')
     return

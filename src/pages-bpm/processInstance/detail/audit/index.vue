@@ -1,6 +1,6 @@
 <template>
   <view class="yd-page-container">
-    <!-- TODO @芋艿：还有一些细节，在审批通过没搞完！ -->
+    <!-- TODO @jason：还有一些细节，在审批通过没搞完！1）签名；2）选择审批人；3）其它等等 -->
     <!-- 顶部导航栏 -->
     <wd-navbar
       :title="isApprove ? '审批同意' : '审批拒绝'"
@@ -93,14 +93,18 @@ function validateForm() {
 /** 提交审批 */
 async function handleSubmit() {
   // TODO @jason：看看是不是要用原生的校验
-  if (submitting.value)
+  if (submitting.value) {
     return
-  if (!validateForm())
+  }
+  if (!validateForm()) {
     return
+  }
 
+  // TODO @jason：要不换成 formLoading？保持项目统一；
   submitting.value = true
   try {
     const api = isApprove.value ? approveTask : rejectTask
+    // TODO @jason：这里看看不用 result
     const result = await api({
       id: taskId.value as string,
       reason: formData.reason,
@@ -111,8 +115,6 @@ async function handleSubmit() {
         handleBack()
       }, 1500)
     }
-  } catch (error) {
-    console.error('[audit] 审批失败:', error)
   } finally {
     submitting.value = false
   }
