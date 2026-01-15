@@ -1,0 +1,56 @@
+name: Sync Yudao UI Admin UniApp
+
+on:
+  schedule:
+    # 北京时间每 12 小时同步一次（08:00, 20:00）
+    - cron: '0 0 * * *'    # UTC 0:00 = 北京时间 08:00
+    - cron: '0 12 * * *'   # UTC 12:00 = 北京时间 20:00
+  workflow_dispatch:
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure git
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+
+      - name: Add upstream remote
+        run: git remote add upstream https://github.com/yudaocode/yudao-ui-admin-uniapp.git
+
+      - name: Sync master branch
+        run: |
+          echo "📦 Syncing master branch..."
+          git fetch upstream master
+          git checkout master 2>/dev/null || git checkout -b master upstream/master
+          if git merge-base --is-ancestor upstream/master master; then
+            echo "✅ master is already up to date"
+          else
+            git merge upstream/master -m "Sync: update master from upstream" || true
+          fi
+          git push origin master --force-with-lease 2>&1 | grep -E "(master|error|Error)" || echo "✅ master pushed"
+
+      - name: Sync tags
+        run: |
+          echo "🏷️ Syncing tags..."
+          git fetch upstream --tags
+          git push origin --tags --force-with-lease 2>&1 | tail -3 || echo "✅ Tags synced"
+
+      - name: Display sync summary
+        run: |
+          echo "📊 Sync Summary (Uni-app + Vue3)"
+          echo "================================"
+          git log --oneline -5
+          echo ""
+          echo "🔗 Upstream: https://github.com/yudaocode/yudao-ui-admin-uniapp"
+          echo "📍 Fork: https://github.com/${{ github.repository }}"
