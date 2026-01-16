@@ -95,12 +95,6 @@ function handleBack() {
   navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`)
 }
 
-/** 初始化校验 */
-// TODO @jason：最好放在 onMounted 里？或者其他地方，有个入口方法。
-if (!props.taskId || !props.processInstanceId) {
-  toast.show('参数错误')
-}
-
 /** 提交操作 */
 async function handleSubmit() {
   if (submitting.value) {
@@ -118,33 +112,33 @@ async function handleSubmit() {
       id: taskId.value as string,
       reason: formData.reason,
     }
-    // todo @jason：这里是不是不用判断 result 哈？
-    let result: boolean
     if (isDelegate.value) {
-      result = await delegateTask({
+      await delegateTask({
         ...data,
         delegateUserId: String(formData.userId),
       })
     } else {
-      result = await transferTask({
+      await transferTask({
         ...data,
         assigneeUserId: String(formData.userId),
       })
     }
-    if (result) {
-      toast.success(`${isDelegate.value ? '委派' : '转办'}成功`)
-      setTimeout(() => {
-        uni.redirectTo({
-          url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
-        })
-      }, 500)
-    }
-  } catch (error) {
-    // TODO @jason：可以不用这里的 catch 哈？
-    console.error(`[reassign] ${isDelegate.value ? '委派' : '转办'}失败:`, error)
-    toast.error(`${isDelegate.value ? '委派' : '转办'}失败`)
+    toast.success(`${isDelegate.value ? '委派' : '转办'}成功`)
+    setTimeout(() => {
+      uni.redirectTo({
+        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
+      })
+    }, 500)
   } finally {
     submitting.value = false
   }
 }
+
+/** 页面加载时 */
+onMounted(() => {
+  /** 初始化校验 */
+  if (!props.taskId || !props.processInstanceId) {
+    toast.show('参数错误')
+  }
+})
 </script>

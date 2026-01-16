@@ -31,8 +31,8 @@
         <wd-button
           :type="isApprove ? 'primary' : 'error'"
           block
-          :loading="submitting"
-          :disabled="submitting"
+          :loading="formLoading"
+          :disabled="formLoading"
           @click="handleSubmit"
         >
           {{ isApprove ? '同意' : '拒绝' }}
@@ -63,7 +63,7 @@ definePage({
 const taskId = computed(() => props.id || '')
 const isPass = computed(() => props.pass !== 'false') // true: 同意, false: 拒绝
 const toast = useToast()
-const submitting = ref(false)
+const formLoading = ref(false)
 const formData = reactive({
   reason: '',
 })
@@ -93,15 +93,14 @@ function validateForm() {
 /** 提交审批 */
 async function handleSubmit() {
   // TODO @jason：看看是不是要用原生的校验
-  if (submitting.value) {
+  if (formLoading.value) {
     return
   }
   if (!validateForm()) {
     return
   }
 
-  // TODO @jason：要不换成 formLoading？保持项目统一；
-  submitting.value = true
+  formLoading.value = true
   try {
     const api = isApprove.value ? approveTask : rejectTask
     // TODO @jason：这里看看不用 result
@@ -116,7 +115,7 @@ async function handleSubmit() {
       }, 1500)
     }
   } finally {
-    submitting.value = false
+    formLoading.value = false
   }
 }
 </script>

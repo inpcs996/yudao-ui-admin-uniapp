@@ -40,8 +40,8 @@
           <wd-button
             type="primary"
             block
-            :loading="submitting"
-            :disabled="submitting"
+            :loading="formLoading"
+            :disabled="formLoading"
             @click="handleSubmit"
           >
             减签
@@ -75,7 +75,7 @@ definePage({
 const taskId = computed(() => props.taskId)
 const processInstanceId = computed(() => props.processInstanceId)
 const toast = useToast()
-const submitting = ref(false)
+const formLoading = ref(false)
 const taskOptions = ref<any[]>([])
 const formData = reactive({
   deleteSignTaskId: '',
@@ -96,12 +96,6 @@ function handleBack() {
   navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`)
 }
 
-/** 初始化校验 */
-// TODO @jason：最好放在 onMounted 里？或者其他地方，有个入口方法。
-if (!props.taskId || !props.processInstanceId) {
-  toast.show('参数错误')
-}
-
 /** 获取减签人员标签 */
 function getDeleteSignUserLabel(task: any): string {
   const deptName = task?.assigneeUser?.deptName || task?.ownerUser?.deptName
@@ -111,37 +105,30 @@ function getDeleteSignUserLabel(task: any): string {
 
 /** 获取可减签的任务列表 */
 async function loadDeleteSignTaskList() {
-  try {
-    let childTasks = []
-    // TODO @jason：这里应该是从 props 里获取？
-    // 从 URL 参数中获取子任务数据
-    if (props.children) {
-      try {
-        childTasks = JSON.parse(decodeURIComponent(props.children))
-      } catch (parseError) {
-        console.error('[delete-sign] 解析子任务数据失败:', parseError)
-      }
+  let childTasks = []
+  // 从 props 中获取子任务数据
+  if (props.children) {
+    try {
+      childTasks = JSON.parse(decodeURIComponent(props.children))
+    } catch (parseError) {
+      console.error('[delete-sign] 解析子任务数据失败:', parseError)
     }
-    // 提示没有子任务数据
-    if (childTasks.length === 0) {
-      toast.show('没有可减签的任务')
-      return
-    }
-
-    taskOptions.value = childTasks.map(task => ({
-      id: task.id,
-      label: getDeleteSignUserLabel(task),
-    }))
-  } catch (error) {
-    // TODO @jason：这里不用 try catch 哈
-    console.error('[delete-sign] 获取可减签任务失败:', error)
-    toast.error('获取可减签任务失败')
   }
+  // 提示没有子任务数据
+  if (childTasks.length === 0) {
+    toast.show('没有可减签的任务')
+    return
+  }
+
+  taskOptions.value = childTasks.map(task => ({
+    id: task.id,
+    label: getDeleteSignUserLabel(task),
+  }))
 }
 
 /** 提交操作 */
 async function handleSubmit() {
-  if (submitting.value) {
+  if (formLoading.value) {
     return
   }
   const { valid } = await formRef.value!.validate()
@@ -149,33 +136,30 @@ async function handleSubmit() {
     return
   }
 
-  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
-  submitting.value = true
+  formLoading.value = true
   try {
-    // TODO @jason：这里是不是不用判断 result 哈？
-    const result = await signDeleteTask({
+    await signDeleteTask({
       id: formData.deleteSignTaskId,
       reason: formData.reason,
     })
-    if (result) {
-      toast.success('减签成功')
-      setTimeout(() => {
-        uni.redirectTo({
-          url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
-        })
-      }, 500)
-    }
-  } catch (error) {
-    // TODO @jason：可以不用这里的 catch 哈？
-    console.error('[delete-sign] 减签失败:', error)
-    toast.error('减签失败')
+    toast.success('减签成功')
+    setTimeout(() => {
+      uni.redirectTo({
+        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
+      })
+    }, 500)
   } finally {
-    submitting.value = false
+    formLoading.value = false
   }
 }
 
 /** 页面加载时，获取可减签任务列表 */
 onMounted(() => {
+  /** 初始化校验 */
+  if (!props.taskId || !props.processInstanceId) {
+    toast.show('参数错误')
+    return
+  }
   loadDeleteSignTaskList()
 })
 </script>
