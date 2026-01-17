@@ -10,21 +10,21 @@
 
     <!-- 审批表单 -->
     <view class="p-24rpx">
-      <view class="overflow-hidden rounded-12rpx bg-white shadow-sm">
-        <view class="p-24rpx">
-          <view class="mb-16rpx text-32rpx text-[#333] font-semibold">
-            审批意见
-          </view>
+      <wd-form ref="formRef" :model="formData" :rules="formRules">
+        <wd-cell-group border>
+          <!-- 审批意见 -->
           <wd-textarea
             v-model="formData.reason"
+            prop="reason"
+            label="审批意见："
+            label-width="180rpx"
             placeholder="请输入审批意见"
             :maxlength="500"
             show-word-limit
             clearable
-            custom-class="border border-solid border-[#e5e5e5] rounded-8rpx"
           />
-        </view>
-      </view>
+        </wd-cell-group>
+      </wd-form>
 
       <!-- 提交按钮 -->
       <view class="mt-48rpx">
@@ -43,14 +43,16 @@
 </template>
 
 <script lang="ts" setup>
-import { computed, reactive, ref } from 'vue'
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { approveTask, rejectTask } from '@/api/bpm/task'
 import { navigateBackPlus } from '@/utils'
 
 const props = defineProps<{
-  id?: string | any
-  pass?: string | any
+  processInstanceId?: string
+  taskId?: string
+  pass?: string
 }>()
 
 definePage({
@@ -60,7 +62,8 @@ definePage({
   },
 })
 
-const taskId = computed(() => props.id || '')
+const taskId = computed(() => props.taskId || '')
+const processInstanceId = computed(() => props.processInstanceId)
 const isPass = computed(() => props.pass !== 'false') // true: 同意, false: 拒绝
 const toast = useToast()
 const formLoading = ref(false)
@@ -68,54 +71,57 @@ const formData = reactive({
   reason: '',
 })
 
+const formRules = {
+  reason: [
+    { required: true, message: '审批意见不能为空' },
+  ],
+}
+
+const formRef = ref<FormInstance>()
+
 /** 是否为同意操作 */
 const isApprove = computed(() => isPass.value)
 
 /** 返回上一页 */
 function handleBack() {
-  navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${taskId.value}`)
-}
-
-/** 初始化校验 */
-if (!props.id) {
-  toast.show('参数错误')
-}
-
-/** 校验表单 */
-function validateForm() {
-  if (!formData.reason.trim()) {
-    toast.show('请输入审批意见')
-    return false
-  }
-  return true
+  navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`)
 }
 
 /** 提交审批 */
 async function handleSubmit() {
-  // TODO @jason：看看是不是要用原生的校验
   if (formLoading.value) {
     return
   }
-  if (!validateForm()) {
+
+  // 使用 wd-form 的校验方法
+  const { valid } = await formRef.value!.validate()
+  if (!valid) {
     return
   }
 
   formLoading.value = true
   try {
     const api = isApprove.value ? approveTask : rejectTask
-    // TODO @jason：这里看看不用 result
-    const result = await api({
+    await api({
       id: taskId.value as string,
       reason: formData.reason,
     })
-    if (result) {
-      toast.success('审批成功')
-      setTimeout(() => {
-        handleBack()
-      }, 1500)
-    }
+    toast.success('审批成功')
+    setTimeout(() => {
+      uni.redirectTo({
+        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
+      })
+    }, 1000)
   } finally {
     formLoading.value = false
   }
 }
+
+/** 页面加载时 */
+onMounted(() => {
+  /** 初始化校验 */
+  if (!props.taskId || !props.processInstanceId) {
+    toast.show('参数错误')
+  }
+})
 </script>
