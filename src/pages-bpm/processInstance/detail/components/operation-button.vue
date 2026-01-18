@@ -52,7 +52,6 @@ import type { Action } from 'wot-design-uni/components/wd-action-sheet/types'
 import type { ButtonType } from 'wot-design-uni/components/wd-button/types'
 import type { ProcessInstance } from '@/api/bpm/processInstance'
 import type { Task } from '@/api/bpm/task'
-import { useToast } from 'wot-design-uni'
 import { useUserStore } from '@/store'
 import {
   BpmProcessInstanceStatus,
@@ -198,10 +197,10 @@ function init(theProcessInstance: ProcessInstance, task: Task) {
 function handleOperation(operationType: number) {
   switch (operationType) {
     case BpmTaskOperationButtonTypeEnum.APPROVE:
-      uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?id=${runningTask.value.id}&pass=true` })
+      uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?processInstanceId=${processInstance.value.id}&taskId=${runningTask.value?.id}&pass=true` })
       break
     case BpmTaskOperationButtonTypeEnum.REJECT:
-      uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?id=${runningTask.value.id}&pass=false` })
+      uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?processInstanceId=${processInstance.value.id}&taskId=${runningTask.value?.id}&pass=false` })
       break
     case BpmTaskOperationButtonTypeEnum.DELEGATE:
       uni.navigateTo({

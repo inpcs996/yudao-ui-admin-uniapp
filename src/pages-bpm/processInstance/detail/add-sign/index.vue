@@ -40,8 +40,8 @@
             type="primary"
             class="flex-1"
             plain
-            :loading="submitting"
-            :disabled="submitting"
+            :loading="formLoading"
+            :disabled="formLoading"
             @click="handleSubmit('before')"
           >
             向前加签
@@ -49,8 +49,8 @@
           <wd-button
             type="primary"
             class="flex-1"
-            :loading="submitting"
-            :disabled="submitting"
+            :loading="formLoading"
+            :disabled="formLoading"
             @click="handleSubmit('after')"
           >
             向后加签
@@ -84,7 +84,7 @@ definePage({
 const taskId = computed(() => props.taskId)
 const processInstanceId = computed(() => props.processInstanceId)
 const toast = useToast()
-const submitting = ref(false)
+const formLoading = ref(false)
 const formData = reactive({
   userIds: [] as number[],
   reason: '',
@@ -104,48 +104,40 @@ function handleBack() {
   navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`)
 }
 
-// TODO @jason：最好放在 onMounted 里？或者其他地方，有个入口方法。
-/** 初始化校验 */
-if (!props.taskId || !props.processInstanceId) {
-  toast.show('参数错误')
-}
-
 /** 提交操作 */
 async function handleSubmit(type: 'before' | 'after') {
-  if (submitting.value) {
+  if (formLoading.value) {
     return
   }
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
   }
-
-  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
-  submitting.value = true
+  formLoading.value = true
   try {
-    // TODO @jason：这里是不是不用判断 result 哈？
-    const result = await signCreateTask({
+    await signCreateTask({
       id: taskId.value as string,
       type,
       userIds: formData.userIds,
       reason: formData.reason,
     })
-    if (result) {
-      const actionText = type === 'before' ? '向前加签' : '向后加签'
-      toast.success(`${actionText}成功`)
-      setTimeout(() => {
-        uni.redirectTo({
-          url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
-        })
-      }, 500)
-    }
-  } catch (error) {
-    // TODO @jason：可以不用这里的 catch 哈？
     const actionText = type === 'before' ? '向前加签' : '向后加签'
-    console.error(`[add-sign] ${actionText}失败:`, error)
-    toast.error(`${actionText}失败`)
+    toast.success(`${actionText}成功`)
+    setTimeout(() => {
+      uni.redirectTo({
+        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
+      })
+    }, 500)
   } finally {
-    submitting.value = false
+    formLoading.value = false
   }
 }
+
+/** 页面加载时 */
+onMounted(() => {
+  /** 初始化校验 */
+  if (!props.taskId || !props.processInstanceId) {
+    toast.show('参数错误')
+  }
+})
 </script>

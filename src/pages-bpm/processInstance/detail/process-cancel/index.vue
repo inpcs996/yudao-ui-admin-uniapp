@@ -37,8 +37,8 @@
           <wd-button
             type="primary"
             block
-            :loading="submitting"
-            :disabled="submitting"
+            :loading="formLoading"
+            :disabled="formLoading"
             @click="handleSubmit"
           >
             确认取消
@@ -71,7 +71,7 @@ definePage({
 const processInstanceId = computed(() => props.processInstanceId)
 const taskId = computed(() => props.taskId)
 const toast = useToast()
-const submitting = ref(false)
+const formLoading = ref(false)
 const formData = reactive({
   cancelReason: '',
 })
@@ -90,43 +90,37 @@ function handleBack() {
   navigateBackPlus(backUrl)
 }
 
-/** 初始化校验 */
-if (!props.processInstanceId) {
-  toast.show('参数错误')
-}
-
 /** 提交操作 */
 async function handleSubmit() {
-  if (submitting.value) {
+  if (formLoading.value) {
     return
   }
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
   }
-
-  // TODO @jason：最好放在 onMounted 里？或者其他地方，有个入口方法。
-  submitting.value = true
+  formLoading.value = true
   try {
-    // TODO @jason：不判断 result 可以哇？
-    const result = await cancelProcessInstanceByStartUser(
+    await cancelProcessInstanceByStartUser(
       processInstanceId.value,
       formData.cancelReason,
     )
-    if (result) {
-      toast.success('流程取消成功')
-      setTimeout(() => {
-        uni.redirectTo({
-          url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}`,
-        })
-      }, 500)
-    }
-  } catch (error) {
-    // TODO @jason：错误处理，这里可以去掉哈。
-    console.error('[process-cancel] 取消流程失败:', error)
-    toast.error('取消流程失败')
+    toast.success('流程取消成功')
+    setTimeout(() => {
+      uni.redirectTo({
+        url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}`,
+      })
+    }, 500)
   } finally {
-    submitting.value = false
+    formLoading.value = false
   }
 }
+
+/** 页面加载时 */
+onMounted(() => {
+  /** 初始化校验 */
+  if (!props.processInstanceId) {
+    toast.show('参数错误')
+  }
+})
 </script>

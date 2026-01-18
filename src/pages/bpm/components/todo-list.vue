@@ -123,12 +123,12 @@ function handleDetail(item: Task) {
 
 /** 同意 */
 function handleApprove(item: Task) {
-  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?id=${item.id}&pass=true` })
+  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?processInstanceId=${item.processInstance.id}&taskId=${item.id}&pass=true` })
 }
 
 /** 拒绝 */
 function handleReject(item: Task) {
-  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?id=${item.id}&pass=false` })
+  uni.navigateTo({ url: `/pages-bpm/processInstance/detail/audit/index?processInstanceId=${item.processInstance.id}&taskId=${item.id}&pass=false` })
 }
 
 /** 触底加载更多 */
