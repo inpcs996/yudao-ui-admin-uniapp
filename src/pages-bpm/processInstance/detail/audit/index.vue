@@ -92,8 +92,6 @@ async function handleSubmit() {
   if (formLoading.value) {
     return
   }
-
-  // 使用 wd-form 的校验方法
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
