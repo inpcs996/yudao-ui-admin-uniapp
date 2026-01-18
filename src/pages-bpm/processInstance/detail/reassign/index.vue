@@ -1,17 +1,25 @@
 <template>
   <view class="yd-page-container">
-    <!-- TODO @jason：还有一些细节，在审批通过没搞完！1）签名；2）选择审批人；3）其它等等 -->
     <!-- 顶部导航栏 -->
     <wd-navbar
-      :title="isApprove ? '审批同意' : '审批拒绝'"
+      :title="isDelegate ? '委派任务' : '转办任务'"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
 
-    <!-- 审批表单 -->
+    <!-- 操作表单 -->
     <view class="p-24rpx">
       <wd-form ref="formRef" :model="formData" :rules="formRules">
         <wd-cell-group border>
+          <!-- 用户选择 -->
+          <UserPicker
+            v-model="formData.userId"
+            prop="userId"
+            type="radio"
+            :label="`${isDelegate ? '接收人' : '新审批人'}：`"
+            :placeholder="`请选择${isDelegate ? '接收人' : '新审批人'}`"
+          />
+
           <!-- 审批意见 -->
           <wd-textarea
             v-model="formData.reason"
@@ -24,35 +32,35 @@
             clearable
           />
         </wd-cell-group>
+        <!-- 提交按钮 -->
+        <view class="mt-48rpx">
+          <wd-button
+            type="primary"
+            block
+            :loading="submitting"
+            :disabled="submitting"
+            @click="handleSubmit"
+          >
+            {{ isDelegate ? '委派' : '转办' }}
+          </wd-button>
+        </view>
       </wd-form>
-
-      <!-- 提交按钮 -->
-      <view class="mt-48rpx">
-        <wd-button
-          :type="isApprove ? 'primary' : 'error'"
-          block
-          :loading="formLoading"
-          :disabled="formLoading"
-          @click="handleSubmit"
-        >
-          {{ isApprove ? '同意' : '拒绝' }}
-        </wd-button>
-      </view>
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
-import { approveTask, rejectTask } from '@/api/bpm/task'
+import { delegateTask, transferTask } from '@/api/bpm/task'
+import UserPicker from '@/components/system-select/user-picker.vue'
 import { navigateBackPlus } from '@/utils'
 
 const props = defineProps<{
-  processInstanceId?: string
-  taskId?: string
-  pass?: string
+  processInstanceId: string
+  taskId: string
+  type: string // 'delegate' 或 'transfer'
 }>()
 
 definePage({
@@ -62,34 +70,34 @@ definePage({
   },
 })
 
-const taskId = computed(() => props.taskId || '')
+const taskId = computed(() => props.taskId)
 const processInstanceId = computed(() => props.processInstanceId)
-const isPass = computed(() => props.pass !== 'false') // true: 同意, false: 拒绝
+const operationType = computed(() => props.type || 'transfer') // 默认转办
+const isDelegate = computed(() => operationType.value === 'delegate')
 const toast = useToast()
-const formLoading = ref(false)
+const submitting = ref(false)
 const formData = reactive({
+  userId: undefined as number | undefined,
   reason: '',
 })
-
 const formRules = {
+  userId: [
+    { required: true, message: `请选择${isDelegate.value ? '接收人' : '新审批人'}` },
+  ],
   reason: [
     { required: true, message: '审批意见不能为空' },
   ],
 }
-
 const formRef = ref<FormInstance>()
-
-/** 是否为同意操作 */
-const isApprove = computed(() => isPass.value)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`)
 }
 
-/** 提交审批 */
+/** 提交操作 */
 async function handleSubmit() {
-  if (formLoading.value) {
+  if (submitting.value) {
     return
   }
   const { valid } = await formRef.value!.validate()
@@ -97,21 +105,32 @@ async function handleSubmit() {
     return
   }
 
-  formLoading.value = true
+  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
+  submitting.value = true
   try {
-    const api = isApprove.value ? approveTask : rejectTask
-    await api({
+    const data = {
       id: taskId.value as string,
       reason: formData.reason,
-    })
-    toast.success('审批成功')
+    }
+    if (isDelegate.value) {
+      await delegateTask({
+        ...data,
+        delegateUserId: String(formData.userId),
+      })
+    } else {
+      await transferTask({
+        ...data,
+        assigneeUserId: String(formData.userId),
+      })
+    }
+    toast.success(`${isDelegate.value ? '委派' : '转办'}成功`)
     setTimeout(() => {
       uni.redirectTo({
         url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
       })
-    }, 1000)
+    }, 500)
   } finally {
-    formLoading.value = false
+    submitting.value = false
   }
 }
 

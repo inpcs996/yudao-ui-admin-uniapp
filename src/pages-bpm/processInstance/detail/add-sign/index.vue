@@ -1,58 +1,77 @@
 <template>
   <view class="yd-page-container">
-    <!-- TODO @jason：还有一些细节，在审批通过没搞完！1）签名；2）选择审批人；3）其它等等 -->
     <!-- 顶部导航栏 -->
     <wd-navbar
-      :title="isApprove ? '审批同意' : '审批拒绝'"
+      title="加签任务"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
 
-    <!-- 审批表单 -->
+    <!-- 操作表单 -->
     <view class="p-24rpx">
       <wd-form ref="formRef" :model="formData" :rules="formRules">
         <wd-cell-group border>
+          <!-- 加签处理人 -->
+          <UserPicker
+            v-model="formData.userIds"
+            prop="userIds"
+            type="checkbox"
+            label="加签处理人："
+            label-width="200rpx"
+            placeholder="请选择加签处理人"
+            :rules="formRules.userIds"
+          />
+
           <!-- 审批意见 -->
           <wd-textarea
             v-model="formData.reason"
             prop="reason"
             label="审批意见："
-            label-width="180rpx"
+            label-width="200rpx"
             placeholder="请输入审批意见"
             :maxlength="500"
             show-word-limit
             clearable
           />
         </wd-cell-group>
+        <!-- 提交按钮 -->
+        <view class="mt-48rpx flex gap-16rpx">
+          <wd-button
+            type="primary"
+            class="flex-1"
+            plain
+            :loading="formLoading"
+            :disabled="formLoading"
+            @click="handleSubmit('before')"
+          >
+            向前加签
+          </wd-button>
+          <wd-button
+            type="primary"
+            class="flex-1"
+            :loading="formLoading"
+            :disabled="formLoading"
+            @click="handleSubmit('after')"
+          >
+            向后加签
+          </wd-button>
+        </view>
       </wd-form>
-
-      <!-- 提交按钮 -->
-      <view class="mt-48rpx">
-        <wd-button
-          :type="isApprove ? 'primary' : 'error'"
-          block
-          :loading="formLoading"
-          :disabled="formLoading"
-          @click="handleSubmit"
-        >
-          {{ isApprove ? '同意' : '拒绝' }}
-        </wd-button>
-      </view>
     </view>
   </view>
 </template>
 
 <script lang="ts" setup>
 import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
-import { computed, onMounted, reactive, ref } from 'vue'
+import { computed, reactive, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
-import { approveTask, rejectTask } from '@/api/bpm/task'
+import { signCreateTask } from '@/api/bpm/task'
+import UserPicker from '@/components/system-select/user-picker.vue'
 import { navigateBackPlus } from '@/utils'
 
 const props = defineProps<{
-  processInstanceId?: string
-  taskId?: string
-  pass?: string
+  processInstanceId: string
+  taskId: string
 }>()
 
 definePage({
@@ -62,33 +81,31 @@ definePage({
   },
 })
 
-const taskId = computed(() => props.taskId || '')
+const taskId = computed(() => props.taskId)
 const processInstanceId = computed(() => props.processInstanceId)
-const isPass = computed(() => props.pass !== 'false') // true: 同意, false: 拒绝
 const toast = useToast()
 const formLoading = ref(false)
 const formData = reactive({
+  userIds: [] as number[],
   reason: '',
 })
-
 const formRules = {
+  userIds: [
+    { required: true, message: '加签处理人不能为空', validator: (value: number[]) => value.length > 0 },
+  ],
   reason: [
     { required: true, message: '审批意见不能为空' },
   ],
 }
-
 const formRef = ref<FormInstance>()
-
-/** 是否为同意操作 */
-const isApprove = computed(() => isPass.value)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`)
 }
 
-/** 提交审批 */
-async function handleSubmit() {
+/** 提交操作 */
+async function handleSubmit(type: 'before' | 'after') {
   if (formLoading.value) {
     return
   }
@@ -96,20 +113,21 @@ async function handleSubmit() {
   if (!valid) {
     return
   }
-
   formLoading.value = true
   try {
-    const api = isApprove.value ? approveTask : rejectTask
-    await api({
+    await signCreateTask({
       id: taskId.value as string,
+      type,
+      userIds: formData.userIds,
       reason: formData.reason,
     })
-    toast.success('审批成功')
+    const actionText = type === 'before' ? '向前加签' : '向后加签'
+    toast.success(`${actionText}成功`)
     setTimeout(() => {
       uni.redirectTo({
         url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
       })
-    }, 1000)
+    }, 500)
   } finally {
     formLoading.value = false
   }

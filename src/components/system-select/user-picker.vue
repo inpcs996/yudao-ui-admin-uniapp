@@ -7,6 +7,7 @@
     value-key="id"
     label-key="nickname"
     :type="type"
+    :prop="prop"
     filterable
     :placeholder="placeholder"
     @confirm="handleConfirm"
@@ -23,10 +24,12 @@ const props = withDefaults(defineProps<{
   type?: 'radio' | 'checkbox'
   label?: string
   placeholder?: string
+  prop?: string
 }>(), {
   type: 'checkbox',
   label: '',
   placeholder: '请选择',
+  prop: '',
 })
 
 const emit = defineEmits<{

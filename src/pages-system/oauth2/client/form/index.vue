@@ -91,6 +91,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { OAuth2Client } from '@/api/system/oauth2/client'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -138,7 +139,7 @@ const formRules = {
   accessTokenValiditySeconds: [{ required: true, message: '访问令牌有效期不能为空' }],
   refreshTokenValiditySeconds: [{ required: true, message: '刷新令牌有效期不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

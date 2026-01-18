@@ -90,6 +90,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { ProcessListener } from '@/api/bpm/process-listener'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -145,7 +146,7 @@ const formRules = {
   valueType: [{ required: true, message: '值类型不能为空' }],
   value: [{ required: true, message: '值不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 根据类型获取事件选项 */
 const eventOptions = computed(() => {

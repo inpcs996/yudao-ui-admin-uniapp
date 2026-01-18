@@ -89,6 +89,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { MailAccount } from '@/api/system/mail/account'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -130,7 +131,7 @@ const formRules = {
   sslEnable: [{ required: true, message: '是否开启 SSL 不能为空' }],
   starttlsEnable: [{ required: true, message: '是否开启 STARTTLS 不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

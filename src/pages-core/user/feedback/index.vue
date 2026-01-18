@@ -52,6 +52,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { UploadFile, UploadMethod } from 'wot-design-uni/components/wd-upload/types'
 import { ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -80,7 +81,7 @@ const formRules = {
     },
   ],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

@@ -191,6 +191,7 @@
 </template>
 
 <script lang="ts" setup>
+import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import type { FileConfig } from '@/api/infra/file/config'
 import { computed, onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
@@ -239,7 +240,7 @@ const formRules = {
   name: [{ required: true, message: '配置名不能为空' }],
   storage: [{ required: true, message: '存储器不能为空' }],
 }
-const formRef = ref()
+const formRef = ref<FormInstance>()
 
 /** 返回上一页 */
 function handleBack() {

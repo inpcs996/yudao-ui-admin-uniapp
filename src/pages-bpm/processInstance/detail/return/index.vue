@@ -1,43 +1,52 @@
 <template>
   <view class="yd-page-container">
-    <!-- TODO @jason：还有一些细节，在审批通过没搞完！1）签名；2）选择审批人；3）其它等等 -->
     <!-- 顶部导航栏 -->
     <wd-navbar
-      :title="isApprove ? '审批同意' : '审批拒绝'"
+      title="退回任务"
       left-arrow placeholder safe-area-inset-top fixed
       @click-left="handleBack"
     />
 
-    <!-- 审批表单 -->
+    <!-- 操作表单 -->
     <view class="p-24rpx">
       <wd-form ref="formRef" :model="formData" :rules="formRules">
         <wd-cell-group border>
-          <!-- 审批意见 -->
+          <!-- 退回节点选择 -->
+          <wd-picker
+            v-model="formData.targetActivityId"
+            label="退回节点："
+            prop="targetActivityId"
+            :columns="activityOptions"
+            value-key="taskDefinitionKey"
+            label-key="name"
+            placeholder="请选择退回节点"
+          />
+
+          <!-- 退回原因 -->
           <wd-textarea
             v-model="formData.reason"
             prop="reason"
-            label="审批意见："
+            label="退回原因："
             label-width="180rpx"
-            placeholder="请输入审批意见"
+            placeholder="请输入退回原因"
             :maxlength="500"
             show-word-limit
             clearable
           />
         </wd-cell-group>
+        <!-- 提交按钮 -->
+        <view class="mt-48rpx">
+          <wd-button
+            type="primary"
+            block
+            :loading="submitting"
+            :disabled="submitting"
+            @click="handleSubmit"
+          >
+            退回
+          </wd-button>
+        </view>
       </wd-form>
-
-      <!-- 提交按钮 -->
-      <view class="mt-48rpx">
-        <wd-button
-          :type="isApprove ? 'primary' : 'error'"
-          block
-          :loading="formLoading"
-          :disabled="formLoading"
-          @click="handleSubmit"
-        >
-          {{ isApprove ? '同意' : '拒绝' }}
-        </wd-button>
-      </view>
     </view>
   </view>
 </template>
@@ -46,13 +55,12 @@
 import type { FormInstance } from 'wot-design-uni/components/wd-form/types'
 import { computed, onMounted, reactive, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
-import { approveTask, rejectTask } from '@/api/bpm/task'
+import { getTaskListByReturn, returnTask } from '@/api/bpm/task'
 import { navigateBackPlus } from '@/utils'
 
 const props = defineProps<{
-  processInstanceId?: string
-  taskId?: string
-  pass?: string
+  processInstanceId: string
+  taskId: string
 }>()
 
 definePage({
@@ -62,64 +70,72 @@ definePage({
   },
 })
 
-const taskId = computed(() => props.taskId || '')
+const taskId = computed(() => props.taskId)
 const processInstanceId = computed(() => props.processInstanceId)
-const isPass = computed(() => props.pass !== 'false') // true: 同意, false: 拒绝
 const toast = useToast()
-const formLoading = ref(false)
+const submitting = ref(false)
+const activityOptions = ref<any[]>([])
 const formData = reactive({
+  targetActivityId: '',
   reason: '',
 })
-
 const formRules = {
+  targetActivityId: [
+    { required: true, message: '退回节点不能为空' },
+  ],
   reason: [
-    { required: true, message: '审批意见不能为空' },
+    { required: true, message: '退回原因不能为空' },
   ],
 }
-
 const formRef = ref<FormInstance>()
-
-/** 是否为同意操作 */
-const isApprove = computed(() => isPass.value)
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus(`/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`)
 }
 
-/** 提交审批 */
+/** 获取可退回的节点列表 */
+async function loadReturnTaskList() {
+  const result = await getTaskListByReturn(taskId.value)
+  activityOptions.value = result
+}
+
+/** 提交操作 */
 async function handleSubmit() {
-  if (formLoading.value) {
+  if (submitting.value) {
     return
   }
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
   }
-
-  formLoading.value = true
+  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
+  submitting.value = true
   try {
-    const api = isApprove.value ? approveTask : rejectTask
-    await api({
+    await returnTask({
       id: taskId.value as string,
+      targetTaskDefinitionKey: formData.targetActivityId,
       reason: formData.reason,
     })
-    toast.success('审批成功')
+
+    toast.success('退回成功')
     setTimeout(() => {
       uni.redirectTo({
         url: `/pages-bpm/processInstance/detail/index?id=${processInstanceId.value}&taskId=${taskId.value}`,
       })
-    }, 1000)
+    }, 500)
   } finally {
-    formLoading.value = false
+    submitting.value = false
   }
 }
 
-/** 页面加载时 */
+/** 页面加载时获取可退回节点列表 */
 onMounted(() => {
   /** 初始化校验 */
   if (!props.taskId || !props.processInstanceId) {
     toast.show('参数错误')
+    return
   }
+  loadReturnTaskList()
 })
 </script>

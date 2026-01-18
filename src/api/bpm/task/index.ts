@@ -11,6 +11,12 @@ export interface TaskUser {
   deptName?: string
 }
 
+/** 操作按钮设置 */
+export interface OperationButtonSetting {
+  displayName: string // 按钮名称
+  enable: boolean // 是否启用
+}
+
 /** 流程任务 */
 export interface Task {
   id: string
@@ -24,6 +30,9 @@ export interface Task {
   ownerUser?: TaskUser
   processInstanceId?: string // 流程实例 ID
   processInstance: ProcessInstance
+  reasonRequire?: boolean // 是否填写审批意见
+  buttonsSetting?: Record<number, OperationButtonSetting> // 按钮设置
+  children?: Task[] // 由加签生成，包含多层子任务
 }
 
 /** 查询待办任务分页列表 */
@@ -54,4 +63,34 @@ export function getTaskListByProcessInstanceId(processInstanceId: string) {
 /** 查询任务管理分页 */
 export function getTaskManagerPage(params: PageParam) {
   return http.get<PageResult<Task>>('/bpm/task/manager-page', params)
+}
+
+/** 委派任务 */
+export function delegateTask(data: { id: string, delegateUserId: string, reason: string }) {
+  return http.put<boolean>('/bpm/task/delegate', data)
+}
+
+/** 转办任务 */
+export function transferTask(data: { id: string, assigneeUserId: string, reason: string }) {
+  return http.put<boolean>('/bpm/task/transfer', data)
+}
+
+/** 退回任务 */
+export function returnTask(data: { id: string, targetTaskDefinitionKey: string, reason: string }) {
+  return http.put<boolean>('/bpm/task/return', data)
+}
+
+/** 获取可退回的节点列表 */
+export function getTaskListByReturn(taskId: string) {
+  return http.get<any[]>(`/bpm/task/list-by-return?id=${taskId}`)
+}
+
+/** 加签任务 */
+export function signCreateTask(data: { id: string, type: string, userIds: number[], reason: string }) {
+  return http.put<boolean>('/bpm/task/create-sign', data)
+}
+
+/** 减签任务 */
+export function signDeleteTask(data: { id: string, reason: string }) {
+  return http.delete<boolean>('/bpm/task/delete-sign', data)
 }
