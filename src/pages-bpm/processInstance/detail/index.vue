@@ -39,51 +39,8 @@
     <!-- 区域：审批详情（表单） -->
     <FormDetail :process-definition="processDefinition" :process-instance="processInstance" />
 
-    <!-- 区域：审批记录 TODO @jason：抽成类似 /Users/yunai/Java/yudao-ui-admin-vben-v5/apps/web-antd/src/views/bpm/processInstance/detail/modules/task-list.vue -->
-    <view class="mx-24rpx mt-24rpx overflow-hidden rounded-16rpx bg-white">
-      <view class="p-24rpx">
-        <view class="mb-16rpx flex items-center justify-between">
-          <text class="text-28rpx text-[#333] font-bold">审批记录</text>
-          <!-- TODO @AI：去掉 orderAsc，不要 toggleOrder -->
-          <wd-icon :name="orderAsc ? 'arrow-up' : 'arrow-down'" size="32rpx" @click="toggleOrder" />
-        </view>
-        <!-- 任务列表 -->
-        <view v-for="(task, index) in sortedTasks" :key="task.id || index" class="relative pb-24rpx pl-40rpx">
-          <!-- 时间线 -->
-          <view
-            class="absolute left-12rpx top-8rpx h-16rpx w-16rpx rounded-full"
-            :class="getTaskDotClass(task)"
-          />
-          <view v-if="index < sortedTasks.length - 1" class="absolute bottom-0 left-18rpx top-28rpx w-2rpx bg-[#e5e5e5]" />
-          <!-- 任务内容 -->
-          <view>
-            <text class="text-28rpx text-[#333] font-bold">{{ task.name }}</text>
-            <view v-if="task.assigneeUser" class="mt-8rpx flex items-center">
-              <view class="mr-8rpx h-48rpx w-48rpx flex items-center justify-center rounded-full bg-[#1890ff] text-24rpx text-white">
-                {{ task.assigneeUser?.nickname?.[0] || '?' }}
-              </view>
-              <view class="flex-1">
-                <view class="flex items-center justify-between">
-                  <view class="flex items-center">
-                    <text class="text-26rpx text-[#333]">{{ task.assigneeUser?.nickname }}</text>
-                    <text v-if="task.assigneeUser?.deptName" class="ml-8rpx text-22rpx text-[#999]">
-                      {{ task.assigneeUser?.deptName }}
-                    </text>
-                  </view>
-                  <text v-if="task.endTime" class="text-22rpx text-[#999]">{{ formatPast(task.endTime) }}</text>
-                </view>
-                <view class="mt-4rpx flex items-center">
-                  <text :class="getStatusTextClass(task.status)" class="text-24rpx">
-                    {{ getStatusText(task.status) }}
-                  </text>
-                  <text v-if="task.reason" class="ml-8rpx text-24rpx text-[#666]">{{ task.reason }}</text>
-                </view>
-              </view>
-            </view>
-          </view>
-        </view>
-      </view>
-    </view>
+    <!-- 区域：审批进度 -->
+    <ProcessInstanceTimeline :activity-nodes="activityNodes" />
 
     <!-- TODO 待开发：区域：流程评论 -->
 
@@ -93,17 +50,17 @@
 </template>
 
 <script lang="ts" setup>
-import type { ProcessDefinition, ProcessInstance } from '@/api/bpm/processInstance'
+import type { ApprovalNodeInfo, ProcessDefinition, ProcessInstance } from '@/api/bpm/processInstance'
 import type { Task } from '@/api/bpm/task'
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useToast } from 'wot-design-uni'
 import { getApprovalDetail } from '@/api/bpm/processInstance'
 import { getTaskListByProcessInstanceId } from '@/api/bpm/task'
-import { useUserStore } from '@/store'
 import { navigateBackPlus } from '@/utils'
-import { formatDateTime, formatPast } from '@/utils/date'
+import { formatDateTime } from '@/utils/date'
 import FormDetail from './components/form-detail.vue'
 import ProcessInstanceOperationButton from './components/operation-button.vue'
+import ProcessInstanceTimeline from './components/time-line.vue'
 
 const props = defineProps<{
   id: string // 流程实例的编号
@@ -121,37 +78,14 @@ const toast = useToast()
 const processInstance = ref<ProcessInstance>()
 const processDefinition = ref<ProcessDefinition>()
 const tasks = ref<Task[]>([])
-const orderAsc = ref(true)
+
+const activityNodes = ref<ApprovalNodeInfo[]>([]) // 审批节点信息
 
 const operationButtonRef = ref() // 操作按钮组件 ref
-
-/** 排序后的任务列表 */
-const sortedTasks = computed(() => {
-  const list = [...tasks.value].filter(t => t.status !== 4) // 过滤已取消
-  // TODO @jason：这里有红色报错，看看 fix 下哇？或者这块排序逻辑去掉，貌似没啥用。
-  list.sort((a, b) => {
-    if (a.endTime && b.endTime) {
-      return orderAsc.value ? a.endTime - b.endTime : b.endTime - a.endTime
-    }
-    if (a.endTime) {
-      return orderAsc.value ? -1 : 1
-    }
-    if (b.endTime) {
-      return orderAsc.value ? 1 : -1
-    }
-    return orderAsc.value ? a.createTime - b.createTime : b.createTime - a.createTime
-  })
-  return list
-})
 
 /** 返回上一页 */
 function handleBack() {
   navigateBackPlus('/pages/bpm/index')
-}
-
-/** 切换排序 */
-function toggleOrder() {
-  orderAsc.value = !orderAsc.value
 }
 
 /** 获取状态文本 */
@@ -236,6 +170,9 @@ async function loadProcessInstance() {
   }
   processInstance.value = data.processInstance
   processDefinition.value = data.processDefinition
+  // 获取审批节点，显示 Timeline 的数据
+  activityNodes.value = data.activityNodes
+
   operationButtonRef.value?.init(data.processInstance, data.todoTask)
 }
 
