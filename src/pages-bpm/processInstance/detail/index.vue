@@ -1,5 +1,5 @@
 <template>
-  <view class="yd-page-container">
+  <view class="yd-page-container pb-[80rpx]">
     <!-- 顶部导航栏 -->
     <wd-navbar
       title="审批详情"
@@ -40,12 +40,20 @@
     <FormDetail :process-definition="processDefinition" :process-instance="processInstance" />
 
     <!-- 区域：审批进度 -->
-    <ProcessInstanceTimeline :activity-nodes="activityNodes" />
+    <view class="mx-24rpx mt-24rpx rounded-16rpx bg-white">
+      <view class="p-24rpx">
+        <view class="mb-16rpx flex">
+          <text class="text-28rpx text-[#333] font-bold">审批进度</text>
+        </view>
+        <!-- 流程时间线 -->
+        <ProcessInstanceTimeline :activity-nodes="activityNodes" />
+      </view>
+    </view>
 
     <!-- TODO 待开发：区域：流程评论 -->
 
     <!-- 区域：底部操作栏 -->
-    <ProcessInstanceOperationButton ref="operationButtonRef" :process-instance="processInstance" />
+    <ProcessInstanceOperationButton ref="operationButtonRef" />
   </view>
 </template>
 

@@ -108,7 +108,7 @@ export function getProcessInstance(id: string) {
 }
 
 /** 获取审批详情 */
-export function getApprovalDetail(params: { processInstanceId: string, activityId?: string, taskId?: string }) {
+export function getApprovalDetail(params: { processDefinitionId?: string, processInstanceId?: string, activityId?: string, taskId?: string, processVariablesStr?: string }) {
   return http.get<ApprovalDetail>('/bpm/process-instance/get-approval-detail', params)
 }
 
