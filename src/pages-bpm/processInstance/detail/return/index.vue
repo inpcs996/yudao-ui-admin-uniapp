@@ -39,8 +39,8 @@
           <wd-button
             type="primary"
             block
-            :loading="submitting"
-            :disabled="submitting"
+            :loading="formLoading"
+            :disabled="formLoading"
             @click="handleSubmit"
           >
             退回
@@ -73,7 +73,7 @@ definePage({
 const taskId = computed(() => props.taskId)
 const processInstanceId = computed(() => props.processInstanceId)
 const toast = useToast()
-const submitting = ref(false)
+const formLoading = ref(false)
 const activityOptions = ref<any[]>([])
 const formData = reactive({
   targetActivityId: '',
@@ -102,15 +102,14 @@ async function loadReturnTaskList() {
 
 /** 提交操作 */
 async function handleSubmit() {
-  if (submitting.value) {
+  if (formLoading.value) {
     return
   }
   const { valid } = await formRef.value!.validate()
   if (!valid) {
     return
   }
-  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
-  submitting.value = true
+  formLoading.value = true
   try {
     await returnTask({
       id: taskId.value as string,
@@ -125,7 +124,7 @@ async function handleSubmit() {
       })
     }, 500)
   } finally {
-    submitting.value = false
+    formLoading.value = false
   }
 }
 

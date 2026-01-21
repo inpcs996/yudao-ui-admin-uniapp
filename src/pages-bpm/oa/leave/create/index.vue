@@ -61,7 +61,6 @@
           v-if="activityNodes.length > 0"
           :activity-nodes="activityNodes"
           :show-status-icon="false"
-          :enable-approve-user-select="true"
           @select-user-confirm="selectUserConfirm"
         />
 

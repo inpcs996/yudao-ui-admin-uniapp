@@ -31,6 +31,7 @@ export interface Task {
   processInstanceId?: string // 流程实例 ID
   processInstance: ProcessInstance
   reasonRequire?: boolean // 是否填写审批意见
+  signEnable?: boolean // 是否需要签名
   buttonsSetting?: Record<number, OperationButtonSetting> // 按钮设置
   children?: Task[] // 由加签生成，包含多层子任务
 }
@@ -46,7 +47,12 @@ export function getTaskDonePage(params: PageParam) {
 }
 
 /** 审批通过 */
-export function approveTask(data: { id: string, reason: string }) {
+export function approveTask(data: {
+  id: string
+  reason: string
+  signPicUrl?: string // 签名图片 URL
+  nextAssignees?: Record<string, number[]> // 下一个节点审批人
+}) {
   return http.put<boolean>('/bpm/task/approve', data)
 }
 

@@ -134,3 +134,8 @@ export function getProcessInstanceManagerPage(params: PageParam) {
 export function cancelProcessInstanceByAdmin(id: string, reason: string) {
   return http.delete<boolean>('/bpm/process-instance/cancel-by-admin', { id, reason })
 }
+
+/** 获取下一个节点审批人 */
+export function getNextApproveNodes(params) {
+  return http.get<ApprovalNodeInfo[]>('/bpm/process-instance/get-next-approval-nodes', params)
+}

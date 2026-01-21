@@ -37,8 +37,8 @@
           <wd-button
             type="primary"
             block
-            :loading="submitting"
-            :disabled="submitting"
+            :loading="formLoading"
+            :disabled="formLoading"
             @click="handleSubmit"
           >
             {{ isDelegate ? '委派' : '转办' }}
@@ -75,7 +75,7 @@ const processInstanceId = computed(() => props.processInstanceId)
 const operationType = computed(() => props.type || 'transfer') // 默认转办
 const isDelegate = computed(() => operationType.value === 'delegate')
 const toast = useToast()
-const submitting = ref(false)
+const formLoading = ref(false)
 const formData = reactive({
   userId: undefined as number | undefined,
   reason: '',
@@ -97,7 +97,7 @@ function handleBack() {
 
 /** 提交操作 */
 async function handleSubmit() {
-  if (submitting.value) {
+  if (formLoading.value) {
     return
   }
   const { valid } = await formRef.value!.validate()
@@ -105,8 +105,7 @@ async function handleSubmit() {
     return
   }
 
-  // TODO @jason：submitting 改成 formLoading 哇？统一代码风格哈；
-  submitting.value = true
+  formLoading.value = true
   try {
     const data = {
       id: taskId.value as string,
@@ -130,7 +129,7 @@ async function handleSubmit() {
       })
     }, 500)
   } finally {
-    submitting.value = false
+    formLoading.value = false
   }
 }
 
