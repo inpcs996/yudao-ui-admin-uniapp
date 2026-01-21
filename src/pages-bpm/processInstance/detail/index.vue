@@ -8,14 +8,18 @@
     />
 
     <!-- 区域：流程信息（基本信息） -->
-    <view class="mx-24rpx mt-24rpx overflow-hidden rounded-16rpx bg-white">
+    <view class="relative mx-24rpx mt-24rpx overflow-hidden rounded-16rpx bg-white">
+      <!-- 审批状态图标（盖章效果） -->
+      <image
+        v-if="processInstance?.status !== undefined"
+        :src="getStatusIcon(processInstance?.status)"
+        class="absolute right-20rpx top-20rpx z-10 h-144rpx w-144rpx"
+        mode="aspectFit"
+      />
       <view class="p-24rpx">
-        <!-- 标题和状态 -->
-        <view class="mb-16rpx flex items-center justify-between">
+        <!-- 标题 -->
+        <view class="mb-16rpx pr-160rpx">
           <text class="text-32rpx text-[#333] font-bold">{{ processInstance?.name }}</text>
-          <wd-tag :type="getStatusType(processInstance?.status)">
-            {{ getStatusText(processInstance?.status) }}
-          </wd-tag>
         </view>
         <!-- 发起人信息 -->
         <view class="flex items-center">
@@ -65,6 +69,7 @@ import { useToast } from 'wot-design-uni'
 import { getApprovalDetail } from '@/api/bpm/processInstance'
 import { getTaskListByProcessInstanceId } from '@/api/bpm/task'
 import { navigateBackPlus } from '@/utils'
+import { BpmProcessInstanceStatus } from '@/utils/constants'
 import { formatDateTime } from '@/utils/date'
 import FormDetail from './components/form-detail.vue'
 import ProcessInstanceOperationButton from './components/operation-button.vue'
@@ -96,74 +101,16 @@ function handleBack() {
   navigateBackPlus('/pages/bpm/index')
 }
 
-/** 获取状态文本 */
-// TODO @jason：要有标签，和 vben 一样，盖章
-// TODO @jason：通过字典
-function getStatusText(status?: number) {
-  const map: Record<number, string> = {
-    0: '待审批',
-    1: '审批中',
-    2: '审批通过',
-    3: '审批不通过',
-    4: '已取消',
-    5: '已退回',
-    6: '委派中',
-    7: '审批通过中',
+/** 获取状态图标 */
+function getStatusIcon(status?: number): string {
+  // 状态映射： 1-审批中, 2-审批通过, 3-审批不通过, 4-已取消. -1 未开始不会出现
+  const iconMap: Record<number, string> = {
+    [BpmProcessInstanceStatus.RUNNING]: '/static/my-icons/bpm/bpm-running.svg', // 待审批
+    [BpmProcessInstanceStatus.APPROVE]: '/static/my-icons/bpm/bpm-approve.svg', // 审批通过
+    [BpmProcessInstanceStatus.REJECT]: '/static/my-icons/bpm/bpm-reject.svg', // 审批不通过
+    [BpmProcessInstanceStatus.CANCEL]: '/static/my-icons/bpm/bpm-cancel.svg', // 已取消
   }
-  return map[status ?? 0] || '待审批'
-}
-
-/** 获取状态标签类型 */
-function getStatusType(status?: number): 'default' | 'primary' | 'success' | 'warning' | 'danger' {
-  if ([1, 6, 7].includes(status ?? 0)) {
-    return 'primary'
-  }
-  if (status === 2) {
-    return 'success'
-  }
-  if (status === 3) {
-    return 'danger'
-  }
-  if (status === 4 || status === 5) {
-    return 'warning'
-  }
-  return 'default'
-}
-
-/** 获取任务圆点样式 */
-// TODO @jason：看看又要对齐 vben
-function getTaskDotClass(task: Task) {
-  if ([1, 6, 7].includes(task.status)) {
-    return 'bg-[#1890ff]'
-  }
-  if (task.status === 2) {
-    return 'bg-[#52c41a]'
-  }
-  if (task.status === 3) {
-    return 'bg-[#ff4d4f]'
-  }
-  if (task.status === 5) {
-    return 'bg-[#faad14]'
-  }
-  return 'bg-[#d9d9d9]'
-}
-
-/** 获取状态文本样式 */
-// TODO @jason：看看又要对齐 vben
-function getStatusTextClass(status: number) {
-  if ([1, 6, 7].includes(status)) {
-    return 'text-[#1890ff]'
-  }
-  if (status === 2) {
-    return 'text-[#52c41a]'
-  }
-  if (status === 3) {
-    return 'text-[#ff4d4f]'
-  }
-  if (status === 5) {
-    return 'text-[#faad14]'
-  }
-  return 'text-[#999]'
+  return iconMap[status ?? 1]
 }
 
 /** 加载流程实例 */

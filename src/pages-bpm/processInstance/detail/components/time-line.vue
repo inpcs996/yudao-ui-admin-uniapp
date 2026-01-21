@@ -108,7 +108,7 @@
           >
             <!-- 审批人信息 -->
             <view v-if="task.assigneeUser || task.ownerUser" class="mb-8rpx flex items-center">
-              <!-- TODO @jason 显示用户头像 -->
+              <!-- TODO @jason 用户头像显示 -->
               <view class="relative mr-8rpx h-48rpx w-48rpx flex items-center justify-center rounded-full bg-[#1890ff] text-24rpx text-white">
                 {{ (task.assigneeUser?.nickname || task.ownerUser?.nickname)?.[0] || '?' }}
 
@@ -159,12 +159,12 @@
             <!-- 签名 -->
             <view
               v-if="task.signPicUrl && activity.nodeType === BpmNodeTypeEnum.USER_TASK_NODE"
-              class="mt-8rpx rounded-8rpx bg-[#f5f5f5] p-16rpx"
+              class="mt-8rpx flex items-center rounded-8rpx bg-[#f5f5f5] p-16rpx"
             >
               <text class="text-24rpx text-[#666]">签名：</text>
               <image
                 :src="task.signPicUrl"
-                class="ml-8rpx h-80rpx w-192rpx"
+                class="ml-8rpx h-96rpx w-288rpx"
                 mode="aspectFit"
                 @click="previewImage(task.signPicUrl)"
               />
