@@ -19,3 +19,8 @@ export interface ProcessDefinition {
 export function getProcessDefinitionList(params?: { suspensionState?: number }) {
   return http.get<ProcessDefinition[]>('/bpm/process-definition/list', params)
 }
+
+/** 获取流程定义详情 */
+export function getProcessDefinition(id?: string, key?: string) {
+  return http.get<ProcessDefinition>('/bpm/process-definition/get', { id, key })
+}

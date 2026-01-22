@@ -1,7 +1,10 @@
 import type { Task } from '@/api/bpm/task'
 import type { PageParam, PageResult } from '@/http/types'
+import type {
+  BpmCandidateStrategyEnum,
+  BpmNodeTypeEnum,
+} from '@/utils/constants'
 import { http } from '@/http/http'
-
 /** 流程实例用户信息 */
 export interface User {
   id: number
@@ -48,7 +51,32 @@ export interface ProcessInstance {
 export interface ApprovalDetail {
   processInstance: ProcessInstance
   processDefinition: ProcessDefinition
+  activityNodes: ApprovalNodeInfo[]
   todoTask: Task
+}
+
+/** 审批详情的节点信息 */
+export interface ApprovalNodeInfo {
+  candidateStrategy?: BpmCandidateStrategyEnum
+  candidateUsers?: User[]
+  endTime?: Date
+  id: string
+  name: string
+  nodeType: BpmNodeTypeEnum
+  startTime?: Date
+  status: number
+  processInstanceId?: string
+  tasks: ApprovalTaskInfo[]
+}
+
+/** 审批详情的节点的任务 */
+export interface ApprovalTaskInfo {
+  id: number
+  assigneeUser: User
+  ownerUser: User
+  reason: string
+  signPicUrl: string
+  status: number
 }
 
 /** 抄送流程实例 */
@@ -80,7 +108,7 @@ export function getProcessInstance(id: string) {
 }
 
 /** 获取审批详情 */
-export function getApprovalDetail(params: { processInstanceId: string, activityId?: string, taskId?: string }) {
+export function getApprovalDetail(params: { processDefinitionId?: string, processInstanceId?: string, activityId?: string, taskId?: string, processVariablesStr?: string }) {
   return http.get<ApprovalDetail>('/bpm/process-instance/get-approval-detail', params)
 }
 
@@ -105,4 +133,9 @@ export function getProcessInstanceManagerPage(params: PageParam) {
 /** 管理员取消流程实例 */
 export function cancelProcessInstanceByAdmin(id: string, reason: string) {
   return http.delete<boolean>('/bpm/process-instance/cancel-by-admin', { id, reason })
+}
+
+/** 获取下一个节点审批人 */
+export function getNextApproveNodes(params) {
+  return http.get<ApprovalNodeInfo[]>('/bpm/process-instance/get-next-approval-nodes', params)
 }
