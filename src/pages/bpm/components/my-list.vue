@@ -47,9 +47,8 @@
       />
 
       <!-- 新增按钮 -->
-      <!-- TODO @AI：换成 wd-fat：要注意，可能高度不对；晚点在改； -->
       <view
-        class="fixed bottom-100rpx right-32rpx z-10 h-100rpx w-100rpx flex items-center justify-center rounded-full bg-[#1890ff] shadow-lg"
+        class="fixed bottom-200rpx right-32rpx z-10 h-100rpx w-100rpx flex items-center justify-center rounded-full bg-[#1890ff] shadow-lg"
         @click="handleCreate"
       >
         <wd-icon name="add" size="24px" color="#fff" />

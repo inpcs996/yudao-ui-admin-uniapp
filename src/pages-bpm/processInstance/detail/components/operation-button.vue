@@ -89,15 +89,10 @@ const operationIconsMap: Record<number, string> = {
 }
 
 const userStore = useUserStore()
-// TODO @jason：字段注释，使用尾注释哈；
-/** 左侧操作按钮 【最多两个】{转办, 委派, 退回, 加签， 抄送等} */
-const leftOperations = ref<LeftOperationType[]>([])
-
-/** 右侧操作按钮【最多两个】{通过，拒绝, 取消} */
-const rightOperationTypes = []
+const leftOperations = ref<LeftOperationType[]>([]) //  左侧操作按钮 【最多两个】{转办, 委派, 退回, 加签， 抄送等}
+const rightOperationTypes = [] // 右侧操作按钮【最多两个】{通过，拒绝, 取消}
 const rightOperations = ref<RightOperationType[]>([])
-/** 更多操作 */
-const moreOperations = ref<MoreOperationType[]>([])
+const moreOperations = ref<MoreOperationType[]>([]) // 更多操作
 const runningTask = ref<Task>()
 const processInstance = ref<ProcessInstance>()
 const reasonRequire = ref<boolean>(false)
